@@ -211,7 +211,7 @@ class FlowAutomationEngine {
     // only another live GENERATION on this profile stays protected.
     const busyCheck = await checkProfileBusyAsync(profilePath, account.id, { reclaimLogin: true });
     if (busyCheck.healedBy === 'reclaim' && busyCheck.killedPids) {
-      this.log(`Band pada hua purana app Chrome saaf kiya (PID ${busyCheck.killedPids.join(', ')}) jo [${account.name}] ki profile pakde hue tha — kaam jaari hai.`, 'info');
+      this.log(`Cleaned up a leftover old app Chrome (PID ${busyCheck.killedPids.join(', ')}) that was holding [${account.name}]'s profile — work continues.`, 'info');
     }
     if (busyCheck.busy) {
       this.lastLaunchError = 'PROFILE_BUSY';
@@ -219,15 +219,15 @@ class FlowAutomationEngine {
         ? ` (${busyCheck.holderInfo.map((h) => `PID ${h.pid}${h.kind ? `, ${h.kind}` : ''}`).join('; ')})`
         : '';
       const why = busyCheck.reason === 'in-use'
-        ? `is account par abhi ek aur kaam chal raha hai${holderNote}`
-        : `profile kisi Chrome me khuli hai${busyCheck.holderPids && busyCheck.holderPids.length ? ` (PID ${busyCheck.holderPids.join(', ')})` : ''} aur saaf nahi ho payi`;
+        ? `another job is currently running on this account${holderNote}`
+        : `the profile is open in some Chrome${busyCheck.holderPids && busyCheck.holderPids.length ? ` (PID ${busyCheck.holderPids.join(', ')})` : ''} and could not be cleared`;
       this.lastBusyDetail = why;
-      this.log(`[${account.name}] ki Chrome profile abhi busy hai — ${why}. Is account ko abhi ke liye chhod rahe hain.`, 'warn');
+      this.log(`[${account.name}]'s Chrome profile is busy right now — ${why}. Skipping this account for now.`, 'warn');
       return false;
     }
     this.lastBusyDetail = null;
 
-    this.log(`[${account.name}] ke liye uski apni Chrome profile khol rahe hain…`, 'info');
+    this.log(`Opening [${account.name}]'s own Chrome profile…`, 'info');
 
     // Visibility comes from the browserMode launch plan.
     // `this.headless` is the pool's "background requested" flag (the
@@ -282,7 +282,7 @@ class FlowAutomationEngine {
 
       this.page.on('dialog', async (dialog) => {
         try {
-          this.log(`Browser ka apna popup khud band kar diya gaya: "${dialog.message()}"`, 'info');
+          this.log(`The browser's own popup was closed automatically: "${dialog.message()}"`, 'info');
           await dialog.dismiss();
         } catch (e) {}
       });
@@ -403,12 +403,12 @@ class FlowAutomationEngine {
       } catch (e) {}
 
       this.currentAccount = account;
-      this.log(`Chrome taiyaar hai — [${account.name}] ki profile khul gayi.`, 'success');
+      this.log(`Chrome is ready — [${account.name}]'s profile is open.`, 'success');
       return true;
     } catch (err) {
       this.lastLaunchError = err.message;
       const t = plainError.translateError(err);
-      this.log(`[${account.name}] ke liye Chrome khul nahi paya — ${t.plain}.`, 'error', { rawError: t.raw });
+      this.log(`Chrome could not open for [${account.name}] — ${t.plain}.`, 'error', { rawError: t.raw });
       return false;
     }
   }
@@ -452,7 +452,7 @@ class FlowAutomationEngine {
   async openFlowStudio(settings = {}) {
     this.currentSettings = settings;
     const url = 'https://flow.google.com/';
-    this.log(`Flow khol rahe hain: ${url}`, 'info');
+    this.log(`Opening Flow: ${url}`, 'info');
 
     try {
       await this.page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
@@ -476,7 +476,7 @@ class FlowAutomationEngine {
     });
 
     if (clickedLanding) {
-      this.log('"Create with Google Flow" par click kiya — canvas (kaam ki jagah) khul raha hai…', 'info');
+      this.log('Clicked "Create with Google Flow" — the canvas (work area) is opening…', 'info');
       await sleep(5000);
     }
 
@@ -484,12 +484,12 @@ class FlowAutomationEngine {
     // signal allowed to mark the account 'Need Login' (audit fix #3), and
     // even then the credit service preserves the last known balance.
     if (this.page.url().includes('accounts.google.com')) {
-      this.log(`[${this.currentAccount ? this.currentAccount.name : 'Account'}] par Google login chahiye — account signed-in nahi hai.`, 'warn');
+      this.log(`[${this.currentAccount ? this.currentAccount.name : 'Account'}] needs a Google login — the account is not signed in.`, 'warn');
       if (!this.headless) {
         for (let i = 0; i < 10; i++) {
           await sleep(3000);
           if (!this.page.url().includes('accounts.google.com')) {
-            this.log('Login mil gaya — Flow studio ki taraf badh rahe hain…', 'success');
+            this.log('Login found — moving towards the Flow studio…', 'success');
             break;
           }
         }
@@ -504,7 +504,7 @@ class FlowAutomationEngine {
     const preferFreshCanvas = settings.canvasStrategy !== 'existing';
     if (!this.page.url().includes('/project/')) {
       this.currentStage = 'Entering Project Canvas';
-      this.log('Gallery se Flow project ke andar ja rahe hain…', 'info');
+      this.log('Going into the Flow project from the gallery…', 'info');
 
       let enteredCanvas = false;
       for (let attempt = 1; attempt <= 3; attempt++) {
@@ -525,7 +525,7 @@ class FlowAutomationEngine {
           return 'none-found';
         }, preferFreshCanvas);
 
-        this.log(`Project ke andar jaane ki koshish ${attempt}/3 — ${actionResult === 'none-found' ? 'koi New Project button ya project link nahi mila' : 'button/link mil gaya, click ho gaya'}`, 'info');
+        this.log(`Attempt ${attempt}/3 to enter the project — ${actionResult === 'none-found' ? 'no New Project button or project link was found' : 'button/link found and clicked'}`, 'info');
 
         for (let w = 0; w < 10; w++) {
           await sleep(1000);
@@ -544,7 +544,7 @@ class FlowAutomationEngine {
 
         if (directHref) {
           const fullUrl = directHref.startsWith('http') ? directHref : `https://flow.google.com${directHref}`;
-          this.log('Seedha project ke link se andar ja rahe hain…', 'info');
+          this.log('Going in directly via the project link…', 'info');
           try {
             await this.page.goto(fullUrl, { waitUntil: 'domcontentloaded', timeout: 45000 });
             await sleep(3000);
@@ -560,7 +560,7 @@ class FlowAutomationEngine {
         throw new Error(`Could not enter Google Flow project canvas. Page remained on ${this.page.url()}. Ensure the account has accepted Google Flow terms and can create projects.`);
       }
 
-      this.log('Flow project khul gaya — kaam ki jagah par aa gaye hain.', 'success');
+      this.log('The Flow project is open — now at the work area.', 'success');
       await sleep(2500);
     }
 
@@ -600,31 +600,31 @@ class FlowAutomationEngine {
       this.creditPort.liveBalance(accId, liveCredits);
       if (this.currentAccount) this.currentAccount.credits = liveCredits;
       if (liveCredits === 0) {
-        this.log(`[${accName}] ke credits 0 hain — is account se video nahi banega, agle account par ja rahe hain.`, 'warn');
+        this.log(`[${accName}] has 0 credits — no video will be made from this account; moving to the next account.`, 'warn');
         return 'EXHAUSTED';
       }
       if (required > 0 && liveCredits < required) {
         // Audit fix #2: low balance is a skip reason, NOT exhaustion.
         this.creditPort.lowCredits(accId, required);
-        this.log(`[${accName}] ke paas sirf ${liveCredits} credits hain, ek video ke liye ~${required} chahiye — is account ko is run ke liye chhod rahe hain.`, 'warn');
+        this.log(`[${accName}] has only ${liveCredits} credits; one video needs ~${required} — skipping this account for this run.`, 'warn');
         return 'LOW_CREDITS';
       }
-      this.log(`[${accName}] ke paas ${liveCredits} credits hain (ek video ≈ ${required} credits).`, 'success');
+      this.log(`[${accName}] has ${liveCredits} credits (one video ≈ ${required} credits).`, 'success');
     } else {
       // Audit fix #3: an inconclusive read changes nothing.
       this.creditPort.ambiguous(accId);
       const known = Number(this.currentAccount ? this.currentAccount.credits : NaN);
       if (!isNaN(known) && required > 0 && known < required) {
         this.creditPort.lowCredits(accId, required);
-        this.log(`[${accName}] ka aakhri maloom balance ${known} credits hai, jo chahiye hue ~${required} se kam hai — is account ko chhod rahe hain.`, 'warn');
+        this.log(`[${accName}]'s last known balance is ${known} credits, which is less than the needed ~${required} — skipping this account.`, 'warn');
         return 'LOW_CREDITS';
       }
     }
 
-    this.log('Flow ka prompt likhne wala box (prompt bar) aane ka intezaar ho raha hai — workspace taiyaar ho raha hai…', 'info');
+    this.log('Waiting for Flow\'s prompt box (prompt bar) to appear — the workspace is getting ready…', 'info');
     try {
       await this.page.waitForSelector('.ProseMirror, div[contenteditable="true"], div[role="textbox"], textarea', { timeout: 30000 });
-      this.log('Flow workspace taiyaar hai — prompts bheje ja sakte hain.', 'success');
+      this.log('The Flow workspace is ready — prompts can be sent.', 'success');
     } catch (e) {}
 
     await this.ensureAgentModeDisabled();
@@ -688,7 +688,7 @@ class FlowAutomationEngine {
       });
 
       if (dismissed) {
-        this.log('Flow par aaya hua rukawat wala banner/overlay khud hata diya gaya.', 'info');
+        this.log('A blocking banner/overlay that appeared on Flow was removed automatically.', 'info');
         await sleep(250);
       }
       return dismissed;
@@ -887,7 +887,7 @@ class FlowAutomationEngine {
       });
 
       if (toggled) {
-        this.log('Flow ka "Agent Mode" ON tha — seedhi video generation ke liye use OFF kar diya hai.', 'info');
+        this.log('Flow\'s "Agent Mode" was ON — it has been turned OFF for direct video generation.', 'info');
         await sleep(1000);
       }
       return toggled;
@@ -927,7 +927,7 @@ class FlowAutomationEngine {
         return;
       } catch (e) {
         const t = plainError.translateError(e);
-        this.log(`Prompt likhne ke pehle tareeke me rukawat aayi — ${t.plain}. Dusra tareeka try ho raha hai…`, 'warn', { rawError: t.raw });
+        this.log(`A problem came up in the first method of writing the prompt — ${t.plain}. Trying the second method…`, 'warn', { rawError: t.raw });
       }
     }
 
@@ -953,7 +953,7 @@ class FlowAutomationEngine {
 
       const modeType = settings.type || 'Video';
       const videoMode = settings.videoMode || 'Text';
-      this.log(`Flow settings lagayi ja rahi hain: Mode=${modeType} | Tarika=${videoMode} | Model=${settings.model || 'Omni Flash'} | Lambai=${settings.duration || '6s'} | Size=${settings.aspectRatio || '9:16'} | Outputs=x1…`, 'info');
+      this.log(`Applying Flow settings: Mode=${modeType} | Type=${videoMode} | Model=${settings.model || 'Omni Flash'} | Duration=${settings.duration || '6s'} | Size=${settings.aspectRatio || '9:16'} | Outputs=x1…`, 'info');
 
       if (videoMode === 'Text') {
         await this.page.evaluate(() => {
@@ -1001,12 +1001,12 @@ class FlowAutomationEngine {
       }
 
       if (pillInfo.found) {
-        this.log(`Flow ki settings wali pill par click ho raha hai: "${pillInfo.text.replace(/\n/g, ' ')}"...`, 'info');
+        this.log(`Clicking Flow's settings pill: "${pillInfo.text.replace(/\n/g, ' ')}"...`, 'info');
         await this.page.mouse.click(pillInfo.x, pillInfo.y);
         await sleep(1000);
 
         // 2. Select Video vs Image mode inside the settings popover
-        this.log(`Mode badla ja raha hai: [${modeType}]…`, 'info');
+        this.log(`Changing the mode: [${modeType}]…`, 'info');
         const modeClicked = await this.page.evaluate((targetMode) => {
           const pop = Array.from(document.querySelectorAll('.cdk-overlay-pane, .settings-content')).find(p => p.getClientRects().length > 0) || document.querySelector('.settings-content') || document.body;
           const btns = Array.from(pop.querySelectorAll('button, [role="radio"], [role="tab"]'));
@@ -1039,7 +1039,7 @@ class FlowAutomationEngine {
         // 3. Select Video Sub-mode (Text vs Ingredients vs Frames)
         if (modeType === 'Video') {
           if (videoMode === 'Ingredients') {
-            this.log('Sub-mode chuna ja raha hai: [Ingredients]…', 'info');
+            this.log('Selecting the sub-mode: [Ingredients]…', 'info');
             await this.page.evaluate(() => {
               const pop = Array.from(document.querySelectorAll('.cdk-overlay-pane, .settings-content')).find(p => p.getClientRects().length > 0) || document.querySelector('.settings-content') || document.body;
               const btns = Array.from(pop.querySelectorAll('button, [role="radio"], [role="tab"]'));
@@ -1048,7 +1048,7 @@ class FlowAutomationEngine {
             });
             await sleep(350);
           } else if (videoMode === 'Frames') {
-            this.log('Sub-mode chuna ja raha hai: [Frames]…', 'info');
+            this.log('Selecting the sub-mode: [Frames]…', 'info');
             await this.page.evaluate(() => {
               const pop = Array.from(document.querySelectorAll('.cdk-overlay-pane, .settings-content')).find(p => p.getClientRects().length > 0) || document.querySelector('.settings-content') || document.body;
               const btns = Array.from(pop.querySelectorAll('button, [role="radio"], [role="tab"]'));
@@ -1071,7 +1071,7 @@ class FlowAutomationEngine {
 
         // 3.5 Select AI Model FIRST among the value controls (v1.6.2: changing the model makes Flow reset the duration to that model's default — setting duration before the model is how a 6s request silently became 8s)
         if (settings.model) {
-          this.log(`AI Model chuna ja raha hai: [${settings.model}]…`, 'info');
+          this.log(`Selecting the AI Model: [${settings.model}]…`, 'info');
           await this.page.evaluate(async (mName) => {
             const pop = Array.from(document.querySelectorAll('.cdk-overlay-pane, .settings-content')).find(p => p.getClientRects().length > 0) || document.querySelector('.settings-content') || document.body;
             const btns = Array.from(pop.querySelectorAll('button, div[role="button"]'));
@@ -1099,7 +1099,7 @@ class FlowAutomationEngine {
 
         // 4. Select Aspect Ratio
         const targetAspect = settings.aspectRatio || (modeType === 'Image' ? '1:1' : '9:16');
-        this.log(`Size (aspect ratio) chuna ja raha hai: [${targetAspect}]…`, 'info');
+        this.log(`Selecting the Size (aspect ratio): [${targetAspect}]…`, 'info');
         await this.page.evaluate((aspect) => {
           const pop = Array.from(document.querySelectorAll('.cdk-overlay-pane, .settings-content')).find(p => p.getClientRects().length > 0) || document.querySelector('.settings-content') || document.body;
           const btns = Array.from(pop.querySelectorAll('button, [role="radio"], [role="tab"]'));
@@ -1116,7 +1116,7 @@ class FlowAutomationEngine {
         // 5. Select Duration
         if (modeType === 'Video') {
           const targetDuration = settings.duration || '6s';
-          this.log(`Lambai (duration) chuni ja rahi hai: [${targetDuration}]…`, 'info');
+          this.log(`Selecting the Duration: [${targetDuration}]…`, 'info');
           await this.page.evaluate((dur) => {
             const pop = Array.from(document.querySelectorAll('.cdk-overlay-pane, .settings-content')).find(p => p.getClientRects().length > 0) || document.querySelector('.settings-content') || document.body;
             const btns = Array.from(pop.querySelectorAll('button, [role="radio"], [role="tab"]'));
@@ -1135,7 +1135,7 @@ class FlowAutomationEngine {
         // x2 from an older session, and the click back to x1 is what
         // keeps the credit math honest.
         const targetCount = 'x1';
-        this.log(`Output ginati chuni ja rahi hai: [${targetCount}]…`, 'info');
+        this.log(`Selecting the output count: [${targetCount}]…`, 'info');
         await this.page.evaluate((cnt) => {
           const pop = Array.from(document.querySelectorAll('.cdk-overlay-pane, .settings-content')).find(p => p.getClientRects().length > 0) || document.querySelector('.settings-content') || document.body;
           const btns = Array.from(pop.querySelectorAll('button, [role="radio"], [role="tab"]'));
@@ -1167,7 +1167,7 @@ class FlowAutomationEngine {
           const wantDur = (settings.duration || '6s').toLowerCase();
           let shownDur = await readSelectedDuration();
           for (let attempt = 0; attempt < 2 && shownDur && shownDur !== wantDur; attempt++) {
-            this.log(`Duration Flow par [${shownDur}] dikh raha hai, chahiye [${wantDur}] — dobara set kar raha hoon...`, 'warn');
+            this.log(`The duration on Flow shows [${shownDur}], need [${wantDur}] — setting it again...`, 'warn');
             await this.page.evaluate((dur) => {
               const pop = Array.from(document.querySelectorAll('.cdk-overlay-pane, .settings-content')).find(p => p.getClientRects().length > 0) || document.querySelector('.settings-content') || document.body;
               const btns = Array.from(pop.querySelectorAll('button, [role="radio"], [role="tab"]'));
@@ -1182,7 +1182,7 @@ class FlowAutomationEngine {
             shownDur = await readSelectedDuration();
           }
           if (shownDur) {
-            this.log(`Duration Flow par confirm: [${shownDur}] (chahiye tha [${wantDur}])`, shownDur === wantDur ? 'success' : 'warn');
+            this.log(`Duration confirmed on Flow: [${shownDur}] (needed [${wantDur}])`, shownDur === wantDur ? 'success' : 'warn');
           }
         }
 
@@ -1198,7 +1198,7 @@ class FlowAutomationEngine {
 
         if (modeType === 'Video' && finalPillText && (finalPillText.includes('Banana') || finalPillText.startsWith('Image'))) {
           if (!isRetry) {
-            this.log(`Settings pill ab bhi Image par atki hai (${finalPillText}) — Video par badalne ki dobara koshish ho rahi hai…`, 'warn');
+            this.log(`The settings pill is still stuck on Image (${finalPillText}) — trying again to switch it to Video…`, 'warn');
             return await this.configureGenerationSettings(settings, true);
           } else {
             this.log(`Settings pill par chetaavni: "${finalPillText}".`, 'warn');
@@ -1207,7 +1207,7 @@ class FlowAutomationEngine {
           this.log(`Saari Flow settings lag gayi aur Flow ke UI me confirm bhi ho gayi: "${finalPillText || modeType}"`, 'success');
         }
       } else {
-        this.log('Flow par settings pill mili hi nahi — default settings se kaam chalega.', 'warn');
+        this.log('No settings pill was found on Flow — work will continue with the default settings.', 'warn');
       }
     } catch (e) {
       const t = plainError.translateError(e);
@@ -1227,7 +1227,7 @@ class FlowAutomationEngine {
 
     promptText = (promptText || '').replace(/[\r\n]+/g, ' ').trim();
     const videoId = `vid_${Date.now()}_${promptIndex + 1}`;
-    this.log(`[Prompt ${promptIndex + 1}/${totalPrompts}] Flow ko bheja ja raha hai: "${promptText.substring(0, 50)}..."`, 'info');
+    this.log(`[Prompt ${promptIndex + 1}/${totalPrompts}] Sending to Flow: "${promptText.substring(0, 50)}..."`, 'info');
 
     if (this.onVideoStarted) {
       this.onVideoStarted({
@@ -1245,11 +1245,11 @@ class FlowAutomationEngine {
     if (settings.type !== 'Image') {
       const creditState = await this.checkCreditsState(settings);
       if (creditState === 'EXHAUSTED') {
-        this.log(`[${this.currentAccount.name}] ke credits khatam ho gaye hain!`, 'warn');
+        this.log(`[${this.currentAccount.name}]'s credits are finished!`, 'warn');
         return { status: 'EXHAUSTED' };
       }
       if (creditState === 'LOW_CREDITS') {
-        this.log(`[${this.currentAccount.name}] ke paas chune hue model ke liye credits kam hain.`, 'warn');
+        this.log(`[${this.currentAccount.name}] has too few credits for the selected model.`, 'warn');
         return { status: 'LOW_CREDITS' };
       }
     }
@@ -1269,13 +1269,13 @@ class FlowAutomationEngine {
 
     const isVideoExpected = (settings.type || 'Video') === 'Video';
     if (isVideoExpected && currentPillText && (currentPillText.includes('Banana') || currentPillText.startsWith('Image'))) {
-      this.log(`Flow workspace wapas Image par chala gaya hai (${currentPillText}) — Video mode dobara lagaya ja raha hai…`, 'warn');
+      this.log(`The Flow workspace has gone back to Image (${currentPillText}) — applying Video mode again…`, 'warn');
       await this.configureGenerationSettings(settings);
     }
 
     // 2. Focus the ProseMirror prompt box and type the prompt
     this.currentStage = 'Prompt Input';
-    this.log('Flow ke prompt likhne wale box par dhyaan (focus) kiya ja raha hai…', 'info');
+    this.log('Focusing Flow\'s prompt box…', 'info');
 
     let tbFound = false;
     try {
@@ -1326,7 +1326,7 @@ class FlowAutomationEngine {
     await this.page.keyboard.press('Backspace');
     await sleep(150);
 
-    this.log(`Prompt likha ja raha hai: "${promptText.substring(0, 50)}..."`, 'info');
+    this.log(`Writing the prompt: "${promptText.substring(0, 50)}..."`, 'info');
     await this.insertNativeText(promptText);
     await sleep(250);
 
@@ -1345,7 +1345,7 @@ class FlowAutomationEngine {
     });
 
     if (!domPromptText || domPromptText.length === 0) {
-      this.log('Pehle tareeke se prompt editor me nahi likha gaya — dusre tareeke (seedha text ghusana) ki koshish ho rahi hai…', 'warn');
+      this.log('The prompt could not be written with the first method — trying the second method (inserting the text directly)…', 'warn');
       if (!this.cdpSession && this.page) {
         try { this.cdpSession = await this.page.target().createCDPSession(); } catch (e) {}
       }
@@ -1360,7 +1360,7 @@ class FlowAutomationEngine {
     }
 
     if (!domPromptText || domPromptText.length === 0) {
-      this.log('Dusra tareeka bhi nahi chala — teesre tareeke ki koshish ho rahi hai…', 'warn');
+      this.log('The second method also did not work — trying the third method…', 'warn');
       await this.page.evaluate((text) => {
         const el = document.querySelector('div.prosemirror-editor div.ProseMirror, div.ProseMirror[contenteditable="true"], div.ProseMirror');
         if (el) {
@@ -1381,7 +1381,7 @@ class FlowAutomationEngine {
       throw new Error('Could not write prompt into Google Flow ProseMirror editor. Editor DOM did not accept input events.');
     }
 
-    this.log(`Prompt Flow ke editor me sahi se likh gaya hai (${domPromptText.length} characters).`, 'success');
+    this.log(`The prompt has been written correctly in Flow's editor (${domPromptText.length} characters).`, 'success');
 
     // Snapshot existing tiles + captured URLs before firing, so this task can
     // later prove which media belongs to ITS submission (audit fix #6).
@@ -1410,7 +1410,7 @@ class FlowAutomationEngine {
 
     // 3. Fire the generation request (trusted OS-level click)
     this.currentStage = 'Firing Generation';
-    this.log('Generate ki request Flow ko bheji ja rahi hai (video banane ka button dab raha hai)…', 'info');
+    this.log('Sending the Generate request to Flow (pressing the video-generation button)…', 'info');
     await sleep(400);
 
     let submitBtnCoords = null;
@@ -1444,7 +1444,7 @@ class FlowAutomationEngine {
 
     if (submitBtnCoords && submitBtnCoords.found) {
       if (submitBtnCoords.disabled) {
-        this.log('Bhejne wala button ab bhi band (disabled) hai — use chaloo karne ki koshish ho rahi hai…', 'warn');
+        this.log('The send button is still off (disabled) — trying to enable it…', 'warn');
         await this.page.evaluate(() => {
           const el = document.querySelector('div.prosemirror-editor div.ProseMirror, div.ProseMirror[contenteditable="true"], div.ProseMirror');
           if (el) {
@@ -1459,7 +1459,7 @@ class FlowAutomationEngine {
       await this.page.mouse.click(submitBtnCoords.x, submitBtnCoords.y);
       await sleep(350);
     } else {
-      this.log('Ctrl+Enter shortcut se prompt bheja ja raha hai…', 'info');
+      this.log('Sending the prompt with the Ctrl+Enter shortcut…', 'info');
       await this.page.keyboard.down('Control');
       await this.page.keyboard.press('Enter');
       await this.page.keyboard.up('Control');
@@ -1574,7 +1574,7 @@ class FlowAutomationEngine {
       };
     }
 
-    this.log(`[Prompt #${promptIndex + 1}] Video banane ki request Flow ko chali gayi — ab render (video banne) ka intezaar hoga.`, 'success');
+    this.log(`[Prompt #${promptIndex + 1}] The video-generation request has gone to Flow — now waiting for the render (video generation).`, 'success');
 
     // 5. Post-submit credit sync — through the credit port only (fix #4).
     // A live re-read wins; otherwise an estimated charge is applied, which
@@ -1586,13 +1586,13 @@ class FlowAutomationEngine {
       if (typeof liveCr === 'number') {
         this.creditPort.liveBalance(accId, liveCr);
         this.currentAccount.credits = liveCr;
-        this.log(`[Credits] [${this.currentAccount.name}] ka balance charge ke baad: ${liveCr} credits.`, 'info');
+        this.log(`[Credits] [${this.currentAccount.name}]'s balance after the charge: ${liveCr} credits.`, 'info');
       } else {
         const res = this.creditPort.estimatedCharge(accId, required);
         if (res && res.account && typeof res.account.credits === 'number') {
           this.currentAccount.credits = res.account.credits;
         }
-        this.log(`[Credits] [${this.currentAccount.name}] se ~${required} credits kate (andaaza — live balance turant nahi padha ja saka).`, 'info');
+        this.log(`[Credits] ~${required} credits were deducted from [${this.currentAccount.name}] (estimate — the live balance could not be read immediately).`, 'info');
       }
       if (this.onAccountUpdated) {
         this.onAccountUpdated({ account: this.currentAccount });
@@ -1650,7 +1650,7 @@ class FlowAutomationEngine {
     } catch (e) {}
     if (lockedTileFingerprint) {
       this.claimedTileFingerprints.add(lockedTileFingerprint);
-      this.log(`[Prompt #${promptIndex + 1}] Apni render tile se jud gaya hai (tile ki pehchan/fingerprint match ho gayi).`, 'info');
+      this.log(`[Prompt #${promptIndex + 1}] Linked to its render tile (the tile identification/fingerprint matched).`, 'info');
     }
 
     return {
@@ -2050,13 +2050,13 @@ class FlowAutomationEngine {
       const valid = await FFmpegService.verifyVideoFile(finalSavedFilePath, 20000);
       if (!valid) {
         try { fs.unlinkSync(finalSavedFilePath); } catch (e) {}
-        this.log(`Save hui file ${fileName} video ki jaanch me fail ho gayi — is download ko fail mana gaya.`, 'warn');
+        this.log(`The saved file ${fileName} failed the video check — this download has been treated as failed.`, 'warn');
         return false;
       }
     }
 
     const sizeMb = (buffer.length / (1024 * 1024)).toFixed(2);
-    this.log(`Video save ho gaya: ${fileName} (${sizeMb} MB).`, 'success');
+    this.log(`Video saved: ${fileName} (${sizeMb} MB).`, 'success');
 
     task.downloaded = true;
     task.completed = true;
@@ -2112,13 +2112,13 @@ class FlowAutomationEngine {
       // "sirf native-menu koshish" jaise dikhe: stream wala rasta ya
       // to URL na milne par yahin ruk gaya, ya neeche fail hua — bina
       // kisi saboot ke. Ab har rukawat ki wajah log hoti hai.
-      this.log(`[Prompt #${task.promptIndex + 1}] Seedha stream download nahi ho sakta: ${!targetUrl
-        ? 'is task ki tile par koi media URL mila hi nahi'
-        : 'jo URL mila wo is task ka apna saabit nahi hua (purana istemal-shuda ya kisi aur tile ka — suraksha ke liye roka gaya)'}.`, 'warn');
+      this.log(`[Prompt #${task.promptIndex + 1}] Direct stream download is not possible: ${!targetUrl
+        ? 'no media URL was found on this task\'s tile at all'
+        : 'the URL that was found was not proven to be this task\'s own (an old used one, or another tile\'s — stopped for safety)'}.`, 'warn');
       return false;
     }
 
-    this.log(`[Prompt #${task.promptIndex + 1}] Video ka seedha download chal raha hai — sirf isi prompt ki apni video stream se…`, 'info');
+    this.log(`[Prompt #${task.promptIndex + 1}] The direct download of the video is running — only from this prompt's own video stream…`, 'info');
 
     let savedBuffer = null;
 
@@ -2196,14 +2196,14 @@ class FlowAutomationEngine {
           if (buf.length >= minSizeDl) {
             savedBuffer = buf;
           } else {
-            this.log(`[Prompt #${task.promptIndex + 1}] Seedha download: server se jawab aaya lekin data bahut chhota tha (${buf.length} bytes) — asli video nahi mana gaya.`, 'warn');
+            this.log(`[Prompt #${task.promptIndex + 1}] Direct download: a response came from the server but the data was very small (${buf.length} bytes) — not treated as the actual video.`, 'warn');
           }
         } else {
-          this.log(`[Prompt #${task.promptIndex + 1}] Seedha download: server ne mana kar diya (HTTP ${resp.status}) — ab browser ke andar se fetch try hoga.`, 'warn');
+          this.log(`[Prompt #${task.promptIndex + 1}] Direct download: the server refused (HTTP ${resp.status}) — now a fetch from inside the browser will be tried.`, 'warn');
         }
       } catch (e) {
         const t = plainError.translateError(e);
-        this.log(`Prompt #${task.promptIndex + 1} ki video file lane me rukawat: ${t.plain}.`, 'warn', { rawError: t.raw });
+        this.log(`A problem came up fetching Prompt #${task.promptIndex + 1}'s video file: ${t.plain}.`, 'warn', { rawError: t.raw });
       }
     }
 
@@ -2234,16 +2234,16 @@ class FlowAutomationEngine {
           const buf = Buffer.from(got.b64, 'base64');
           if (buf.length >= minSizeDl) {
             savedBuffer = buf;
-            this.log(`[Prompt #${task.promptIndex + 1}] Browser ke andar wale fetch se video ka data mil gaya (${(buf.length / 1024).toFixed(0)} KB).`, 'info');
+            this.log(`[Prompt #${task.promptIndex + 1}] Got the video data from the in-browser fetch (${(buf.length / 1024).toFixed(0)} KB).`, 'info');
           } else {
-            this.log(`[Prompt #${task.promptIndex + 1}] Browser ke andar wala fetch bhi bahut chhota data laya (${buf.length} bytes).`, 'warn');
+            this.log(`[Prompt #${task.promptIndex + 1}] The in-browser fetch also brought very small data (${buf.length} bytes).`, 'warn');
           }
         } else if (got && got.err) {
-          this.log(`[Prompt #${task.promptIndex + 1}] Browser ke andar wala fetch bhi fail: ${got.err}.`, 'warn');
+          this.log(`[Prompt #${task.promptIndex + 1}] The in-browser fetch also failed: ${got.err}.`, 'warn');
         }
       } catch (e) {
         const t = plainError.translateError(e);
-        this.log(`[Prompt #${task.promptIndex + 1}] Browser ke andar wala fetch chal nahi paya: ${t.plain}.`, 'warn', { rawError: t.raw });
+        this.log(`[Prompt #${task.promptIndex + 1}] The in-browser fetch could not run: ${t.plain}.`, 'warn', { rawError: t.raw });
       }
     }
 
@@ -2254,7 +2254,7 @@ class FlowAutomationEngine {
     // v2.7.0: yahan tak aane ka matlab hai URL apna tha lekin file ka
     // data nahi ban paya (buffer nahi mila / fetch fail / data bahut
     // chhota). Wajah saaf likho — khamoshi hi v2.6.0 ka bug thi.
-    this.log(`[Prompt #${task.promptIndex + 1}] Stream se file nahi ban payi: video ka data haath nahi aaya (server se jawab nahi mila, ya data bahut chhota tha).`, 'warn');
+    this.log(`[Prompt #${task.promptIndex + 1}] The file could not be made from the stream: the video data was not received (no response from the server, or the data was very small).`, 'warn');
     return false;
   }
 
@@ -2398,12 +2398,12 @@ class FlowAutomationEngine {
       await sleep(400);
     }
     if (optCoords.found) {
-      this.log(`Resolution chuna ja raha hai: "${optCoords.text}"…`, 'info');
+      this.log(`Selecting the resolution: "${optCoords.text}"…`, 'info');
       const clickedAt = Date.now();
       await this.page.mouse.click(optCoords.x, optCoords.y);
       return { found: true, clickedAt };
     }
-    this.log('Resolution wala menu nahi dikha — ho sakta hai download seedha shuru ho gaya ho; file ka intezaar ho raha hai…', 'warn');
+    this.log('The resolution menu did not appear — the download may have started directly; waiting for the file…', 'warn');
     return { found: false, clickedAt: 0 };
   }
 
@@ -2478,14 +2478,14 @@ class FlowAutomationEngine {
       const valid = await FFmpegService.verifyVideoFile(finalSavedFilePath, 20000);
       if (!valid) {
         try { fs.unlinkSync(finalSavedFilePath); } catch (e) {}
-        this.log(`Download hui file ${task.fileName} video ki jaanch me fail ho gayi — is download ko fail mana gaya.`, 'warn');
+        this.log(`The downloaded file ${task.fileName} failed the video check — this download has been treated as failed.`, 'warn');
         return false;
       }
     }
 
     const fileStats = fs.statSync(finalSavedFilePath);
     const sizeMb = (fileStats.size / (1024 * 1024)).toFixed(2);
-    this.log(`Video save ho gaya: ${task.fileName} (${sizeMb} MB).`, 'success');
+    this.log(`Video saved: ${task.fileName} (${sizeMb} MB).`, 'success');
 
     task.downloaded = true;
     task.completed = true;
@@ -2602,10 +2602,10 @@ class FlowAutomationEngine {
       const idx = await this._resolveTileIndexForTask(task, tileIndexHint);
       const coords = idx >= 0 ? await this._tileCenterCoords(idx) : { found: false };
       if (!coords.found) {
-        attempts.push({ strategy: 'native-editor', ok: false, note: 'apni tile grid par mili hi nahi, editor khul hi nahi paya' });
+        attempts.push({ strategy: 'native-editor', ok: false, note: 'not found on its tile grid at all, the editor could not even open' });
         return false;
       }
-      this.log(`[Prompt #${n}] Apni tile par click karke uska bada view (editor) khol rahe hain: "${coords.text || ''}"`, 'info');
+      this.log(`[Prompt #${n}] Opening its big view (editor) by clicking on its tile: "${coords.text || ''}"`, 'info');
       // Do koshish: pehla click kabhi tile ke upar wale hisse me
       // atak sakta hai — dusra click tabhi jab URL se pakka ho ki
       // editor abhi bhi nahi khula.
@@ -2616,7 +2616,7 @@ class FlowAutomationEngine {
         opened = await this._inEditorView();
       }
       if (!opened) {
-        attempts.push({ strategy: 'native-editor', ok: false, note: 'tile par do baar click ke baad bhi editor view nahi khula (URL grid par hi raha)' });
+        attempts.push({ strategy: 'native-editor', ok: false, note: 'even after clicking the tile twice, the editor view did not open (the URL stayed on the grid)' });
         return false;
       }
     }
@@ -2629,21 +2629,21 @@ class FlowAutomationEngine {
       await sleep(500);
     }
     if (!ctl.found) {
-      this.log(`[Prompt #${n}] Editor ki top bar par 15 second ke intezaar ke baad bhi "Download media" nahi mila.`, 'warn');
-      attempts.push({ strategy: 'native-editor', ok: false, note: 'editor ki top bar par "Download media" 15s ke intezaar ke baad bhi nahi mila' });
+      this.log(`[Prompt #${n}] Even after waiting 15 seconds, "Download media" was not found on the editor's top bar.`, 'warn');
+      attempts.push({ strategy: 'native-editor', ok: false, note: '"Download media" was not found on the editor\'s top bar even after waiting 15s' });
       // v2.6.0 ki galti: yahan sirf Escape dabta tha aur page editor
       // me hi atka reh jata tha — baaki raste grid na hone ki wajah
       // se mar jate the. Ab grid par wapas jaana pakka hai.
       await this._returnToProjectGrid();
       return false;
     }
-    this.log(`[Prompt #${n}] Editor ki top bar par "Download media" mil gaya (${ctl.how}) — click ho raha hai…`, 'info');
+    this.log(`[Prompt #${n}] Found "Download media" on the editor's top bar (${ctl.how}) — clicking…`, 'info');
     const clickTime = Date.now();
     await this.page.mouse.click(ctl.x, ctl.y);
     const res = await this._nativePickResolution();
     const ok = await this._nativeAwaitAndSave(task, prep, res.clickedAt || clickTime, 90000, downloadFolder, settings);
-    attempts.push({ strategy: 'native-editor', ok, note: ok ? `editor ki top bar ke "Download media" (${ctl.how}) se file aa gayi` : 'editor ka "Download media" click hua, lekin file nahi aayi' });
-    if (!ok) this.log(`[Prompt #${n}] Editor wale raste se file nahi aayi — agla roop try hoga.`, 'warn');
+    attempts.push({ strategy: 'native-editor', ok, note: ok ? `the file came from the editor's top bar "Download media" (${ctl.how})` : 'the editor\'s "Download media" was clicked, but no file arrived' });
+    if (!ok) this.log(`[Prompt #${n}] No file came from the editor route — the next form will be tried.`, 'warn');
     return ok;
   }
 
@@ -2701,10 +2701,10 @@ class FlowAutomationEngine {
       more = await findMoreControl(-1);
     }
     if (!more.found) {
-      attempts.push({ strategy: 'native-menu', ok: false, note: '⋮ (more options) wala button hi nahi mila' });
+      attempts.push({ strategy: 'native-menu', ok: false, note: 'the ⋮ (more options) button was not found at all' });
       return false;
     }
-    this.log(`[Prompt #${n}] ⋮ (more options) wala menu khol rahe hain — uske andar Download dhoondha jayega…`, 'info');
+    this.log(`[Prompt #${n}] Opening the ⋮ (more options) menu — Download will be searched inside it…`, 'info');
     await this.page.mouse.click(more.x, more.y);
     await sleep(800);
 
@@ -2754,19 +2754,19 @@ class FlowAutomationEngine {
       await sleep(500);
     }
     if (!item.found) {
-      this.log(`[Prompt #${n}] ⋮ menu khula, lekin uske andar koi Download wala item nahi mila.`, 'warn');
-      attempts.push({ strategy: 'native-menu', ok: false, note: 'menu khula lekin usme Download wala item nahi tha' });
+      this.log(`[Prompt #${n}] The ⋮ menu opened, but no Download item was found inside it.`, 'warn');
+      attempts.push({ strategy: 'native-menu', ok: false, note: 'the menu opened but it had no Download item' });
       try { await this.page.keyboard.press('Escape'); } catch (e) {}
       await this._returnToProjectGrid();
       return false;
     }
-    this.log(`[Prompt #${n}] Menu ke andar Download wala item mil gaya ("${item.how}") — click ho raha hai…`, 'info');
+    this.log(`[Prompt #${n}] Found the Download item inside the menu ("${item.how}") — clicking…`, 'info');
     const clickTime = Date.now();
     await this.page.mouse.click(item.x, item.y);
     const res = await this._nativePickResolution();
     const ok = await this._nativeAwaitAndSave(task, prep, res.clickedAt || clickTime, 90000, downloadFolder, settings);
-    attempts.push({ strategy: 'native-menu', ok, note: ok ? 'menu ke Download item se file aa gayi' : 'menu ka Download item click hua, lekin file nahi aayi' });
-    if (!ok) this.log(`[Prompt #${n}] Menu wale raste se bhi file nahi aayi.`, 'warn');
+    attempts.push({ strategy: 'native-menu', ok, note: ok ? 'the file came from the menu\'s Download item' : 'the menu\'s Download item was clicked, but no file arrived' });
+    if (!ok) this.log(`[Prompt #${n}] No file came from the menu route either.`, 'warn');
     return ok;
   }
 
@@ -2788,7 +2788,7 @@ class FlowAutomationEngine {
       let ok = false;
       try { ok = await run(); } catch (e) {
         const t = plainError.translateError(e);
-        this.log(`[Prompt #${task.promptIndex + 1}] Ek download roop me rukawat — ${t.plain}. Agla roop try hoga.`, 'warn', { rawError: t.raw });
+        this.log(`[Prompt #${task.promptIndex + 1}] A problem in one download form — ${t.plain}. The next form will be tried.`, 'warn', { rawError: t.raw });
       }
       if (ok) return true;
     }
@@ -2885,9 +2885,9 @@ class FlowAutomationEngine {
     // ki hifazat: workflowId / currentSrc / kram ki bandish).
     task.completedVideoUrl = url;
     const viaShabd = task.backendUrlVia === 'workflow-id'
-      ? 'workflowId ki pehchan se bandha hua'
-      : (task.backendUrlVia === 'currentSrc' ? 'tile ke currentSrc se pushti hua' : 'kram ke hisaab se bandha hua');
-    this.log(`[Prompt #${n}] Backend se seedha link mila (${viaShabd}) — download ho raha hai, bina kisi button ke…`, 'info');
+      ? 'bound by workflowId identification'
+      : (task.backendUrlVia === 'currentSrc' ? 'confirmed from the tile\'s currentSrc' : 'bound by sequence order');
+    this.log(`[Prompt #${n}] Got a direct link from the backend (${viaShabd}) — downloading, without any button…`, 'info');
     if (!task._backendNotified) {
       task._backendNotified = true;
       try { this.onBackendMedia(task, { via: task.backendUrlVia || 'workflow-id', host: networkCapture.hostOf(url) }); } catch (e) {}
@@ -2899,7 +2899,7 @@ class FlowAutomationEngine {
       try { ok = await this.downloadFromCapturedStream(task, ctx.downloadFolder, ctx.settings); } catch (e) { ok = false; }
     }
     if (!ok && !task.mediaSaved) {
-      this.log(`[Prompt #${n}] Backend wala link mila tha, lekin usse file nahi ban payi (ho sakta hai link expire ho gaya ho). Baaki raaste try honge.`, 'warn');
+      this.log(`[Prompt #${n}] The backend link had been found, but the file could not be made from it (the link may have expired). The remaining routes will be tried.`, 'warn');
     }
     return !!ok;
   }
@@ -2917,7 +2917,7 @@ class FlowAutomationEngine {
     if (task.mediaSaved) return true;
     if (task._backendFetchPromise) {
       const ok = await task._backendFetchPromise;
-      attempts.push({ strategy: 'backend-fetch', ok: !!ok, note: ok ? 'backend link milte hi turant fetch se file save ho gayi' : 'backend link mila tha, lekin turant fetch file save nahi kar paya' });
+      attempts.push({ strategy: 'backend-fetch', ok: !!ok, note: ok ? 'as soon as the backend link was found, the file was saved by an immediate fetch' : 'the backend link was found, but the immediate fetch could not save the file' });
       if (ok || task.mediaSaved) return true;
       // Turant fetch fail hua — ek baar phir, taze bandhan ke saath.
       task._backendFetchPromise = null;
@@ -2933,15 +2933,15 @@ class FlowAutomationEngine {
       if (key) this._captureTasks.set(key, task);
       task._backendCtx = { downloadFolder, settings };
       const ok = await this._kickBackendFetch(task, task._backendCtx);
-      attempts.push({ strategy: 'backend-fetch', ok: !!ok, note: ok ? 'backend (network) se bandha link seedha fetch karke save ho gaya' : 'backend link mila, lekin fetch se file nahi bani (link expire ho gaya ho sakta hai)' });
+      attempts.push({ strategy: 'backend-fetch', ok: !!ok, note: ok ? 'the link bound from the backend (network) was fetched directly and saved' : 'the backend link was found, but no file was made from the fetch (the link may have expired)' });
       return !!ok;
     }
     const seen = this.netCapture ? this.netCapture.stats.mediaUrlsSeen : 0;
     attempts.push({
       strategy: 'backend-fetch', ok: false,
       note: seen > 0
-        ? 'is task ke liye backend par koi link bandha hi nahi (network par kul ' + seen + ' video link dikhe, lekin is prompt ki pehchan wala ek bhi nahi)'
-        : 'backend (network) par is run me koi video link dikha hi nahi'
+        ? 'no link was bound on the backend for this task (a total of ' + seen + ' video links were seen on the network, but not a single one identified as this prompt\'s)'
+        : 'no video link was seen at all on the backend (network) in this run'
     });
     if (seen === 0 && !this._backendNoteLogged) {
       this._backendNoteLogged = true;
@@ -2953,9 +2953,9 @@ class FlowAutomationEngine {
       let diag = '';
       try {
         const snap = this.netCapture.statsSnapshot();
-        diag = ` (Network jaanch: kul ${snap.responsesSeen} jawab aaye, API ke ${snap.apiResponses}, media jawab ${snap.mediaResponsesSeen}; hosts: ${snap.topHosts || '—'})`;
+        diag = ` (Network check: ${snap.responsesSeen} responses came in total, API ${snap.apiResponses}, media responses ${snap.mediaResponsesSeen}; hosts: ${snap.topHosts || '—'})`;
       } catch (e) {}
-      this.log(`[Prompt #${n}] Backend par koi video link nahi dikha — UI wale raaste try ho rahe hain.${diag}`, 'warn');
+      this.log(`[Prompt #${n}] No video link was seen on the backend — the UI routes are being tried.${diag}`, 'warn');
     }
     return false;
   }
@@ -3011,14 +3011,14 @@ class FlowAutomationEngine {
       const okBackend = await this._tryBackendDownload(task, downloadFolder, settings, attempts);
       if (okBackend) return { ok: true, strategy: 'backend-fetch', attempts };
     } catch (e) {
-      attempts.push({ strategy: 'backend-fetch', ok: false, note: 'backend raste me rukawat aayi — baaki raaste try honge' });
+      attempts.push({ strategy: 'backend-fetch', ok: false, note: 'a problem came up in the backend route — the remaining routes will be tried' });
     }
     if (task.mediaSaved) return { ok: true, strategy: 'backend-fetch', attempts };
 
     // --- Ranneeti 2: apni stream / tile ka src ---
     let url = (task.completedVideoUrl && task.completedVideoUrl !== task.backendVideoUrl && this._isTaskOwnUrl(task, task.completedVideoUrl))
       ? task.completedVideoUrl : null;
-    let via = url ? 'pehle mili hui stream' : null;
+    let via = url ? 'stream found earlier' : null;
     if (!url) {
       const got = await this._extractTileMediaUrlDetailed(task, tileIndexHint, isImage);
       if (got && got.url) {
@@ -3026,8 +3026,8 @@ class FlowAutomationEngine {
           url = got.url;
           via = got.via;
         } else {
-          attempts.push({ strategy: 'tile-src', ok: false, note: 'tile par URL mila lekin wo is task ka apna saabit nahi hua (purana ya kisi aur tile ka) — suraksha ke liye roka gaya' });
-          this.log(`[Prompt #${n}] Tile par mila URL is task ka apna saabit nahi hua — suraksha ke liye use NAHI utara gaya.`, 'warn');
+          attempts.push({ strategy: 'tile-src', ok: false, note: 'a URL was found on the tile but it was not proven to be this task\'s own (old, or another tile\'s) — stopped for safety' });
+          this.log(`[Prompt #${n}] The URL found on the tile was not proven to be this task's own — it was NOT downloaded, for safety.`, 'warn');
         }
       }
     }
@@ -3046,14 +3046,14 @@ class FlowAutomationEngine {
       task.completedVideoUrl = url;
       const fromBuffer = !!(this.capturedVideoBuffers && this.capturedVideoBuffers.has(url));
       const stratName = crossMatched ? 'backend-fetch' : (fromBuffer ? 'captured-stream' : 'tile-src');
-      this.log(`[Prompt #${n}] Download ranneeti: ${crossMatched ? 'tile ke URL ki backend (network) se pushti ho gayi' : (fromBuffer ? 'beech me pakdi gayi video stream' : `tile ke element se mila URL (${via})`)} — file utari ja rahi hai…`, 'info');
+      this.log(`[Prompt #${n}] Download strategy: ${crossMatched ? 'the tile\'s URL has been confirmed from the backend (network)' : (fromBuffer ? 'video stream captured in between' : `URL found from the tile's element (${via})`)} — downloading the file…`, 'info');
       let ok = false;
       try { ok = await this.downloadFromCapturedStream(task, downloadFolder, settings); } catch (e) { ok = false; }
-      attempts.push({ strategy: stratName, ok, note: ok ? 'isi raste se file save ho gayi' : 'URL apna tha, lekin file ka data nahi ban paya' });
+      attempts.push({ strategy: stratName, ok, note: ok ? 'the file was saved by this route' : 'the URL was the task\'s own, but the file data could not be made' });
       if (ok) return { ok: true, strategy: stratName, attempts };
     } else {
-      this.log(`[Prompt #${n}] Tile par is task ka koi media URL nahi mila — seedha stream download mumkin nahi; ab baaki raaste try honge.`, 'warn');
-      attempts.push({ strategy: 'tile-src', ok: false, note: 'tile par media URL nahi mila' });
+      this.log(`[Prompt #${n}] No media URL of this task was found on the tile — direct stream download is not possible; now the remaining routes will be tried.`, 'warn');
+      attempts.push({ strategy: 'tile-src', ok: false, note: 'no media URL was found on the tile' });
     }
 
     // --- Ranneeti 3 (v2.8.0): backend KRAM se bandhan ---
@@ -3066,7 +3066,7 @@ class FlowAutomationEngine {
         this._captureTasks.set(captureKey, task);
         task._backendCtx = { downloadFolder, settings };
         const ok = await this._kickBackendFetch(task, task._backendCtx);
-        attempts.push({ strategy: 'backend-fetch', ok: !!ok, note: ok ? 'backend par mila bin-bandha link kram ke hisaab se is task ka mana gaya aur save ho gaya' : 'kram se bandha backend link fetch nahi ho paya' });
+        attempts.push({ strategy: 'backend-fetch', ok: !!ok, note: ok ? 'the unbound link found on the backend was treated as this task\'s by sequence order and saved' : 'the backend link bound by sequence could not be fetched' });
         if (ok) return { ok: true, strategy: 'backend-fetch', attempts };
       }
     }
@@ -3124,10 +3124,10 @@ class FlowAutomationEngine {
       if (!found) found = await this._recoveryScanForTask(task, isImage);
     }
     if (!found) {
-      this.log(`[Prompt #${n}] Download-retry: poore project ko scan karke bhi is prompt ki tile NAHI mili — video wahan maujood hi nahi lagta.`, 'warn');
+      this.log(`[Prompt #${n}] Download-retry: even after scanning the whole project, this prompt's tile was NOT found — the video does not seem to exist there.`, 'warn');
       return { status: 'tile-missing', attempts: backendAttempts.concat(task.downloadAttempts || []) };
     }
-    this.log(`[Prompt #${n}] Download-retry: tile project me mil gayi — ab SIRF download ki saari ranneetiyan dobara chalengi (koi naya submit/charge nahi).`, 'info');
+    this.log(`[Prompt #${n}] Download-retry: the tile was found in the project — now ONLY all the download strategies will run again (no new submit/charge).`, 'info');
     const dl = await this.downloadTaskMedia(task, downloadFolder, settings, task.tileIndex);
     return dl.ok
       ? { status: 'downloaded', attempts: backendAttempts.concat(dl.attempts) }
@@ -3162,7 +3162,7 @@ class FlowAutomationEngine {
       try { this.registerBackendTask(t, downloadFolder, settings); } catch (e) {}
     }
 
-    this.log(`[${this.currentAccount.name}] par ${pendingTasks.length} video ban rahe hain — render ki progress dekh rahe hain…`, 'info');
+    this.log(`[${this.currentAccount.name}] has ${pendingTasks.length} videos generating — watching the render progress…`, 'info');
 
     // v2.1.0: the base video wait went 360s -> 600s (owner's PC test:
     // Flow was simply slow; the old budget failed a paid render).
@@ -3205,7 +3205,7 @@ class FlowAutomationEngine {
           this.log(`[${this.currentAccount.name}] ke saare ${accountTasks.length} video ban gaye aur download bhi ho gaye!`, 'success');
         } else {
           const stages = [...new Set(failedTasks.map(t => t.failureStage || 'generation'))].join(', ');
-          this.log(`[${this.currentAccount.name}] par kaam khatam: ${accountTasks.length} prompt me se ${savedCount} video download hue, ${failedTasks.length} fail hue${failedTasks.length ? ` (stage: ${stages})` : ''} — fail walo ki wajah upar ki lines me hai.`, failedTasks.length ? 'warn' : 'success');
+          this.log(`Work finished on [${this.currentAccount.name}]: out of ${accountTasks.length} prompts, ${savedCount} videos were downloaded, ${failedTasks.length} failed${failedTasks.length ? ` (stage: ${stages})` : ''} — the reasons for the failed ones are in the lines above.`, failedTasks.length ? 'warn' : 'success');
         }
         break;
       }
@@ -3224,7 +3224,7 @@ class FlowAutomationEngine {
         let rescuedAny = false;
         if (timeoutSweeps < 2) {
           timeoutSweeps++;
-          this.log(`[${this.currentAccount.name}] Render ka samay lamba ho gaya hai — fail karne se pehle poora project ek baar achhe se scan kar rahe hain (sweep ${timeoutSweeps}/2)…`, 'warn');
+          this.log(`[${this.currentAccount.name}] The render time has become long — before failing, scanning the whole project once properly (sweep ${timeoutSweeps}/2)…`, 'warn');
           for (const t of accountTasks) {
             if (t.downloaded || t.completed) continue;
             if (stallWatch.isInRecovery(t)) continue; // its own window governs it
@@ -3234,7 +3234,7 @@ class FlowAutomationEngine {
         }
         if (rescuedAny) {
           effectiveMaxWaitSec = ((Date.now() - startMonitorTime) / 1000) + 180;
-          this.log(`Kuch tiles scan me mil gayi hain — unke download ke liye 3 minute aur intezaar badha diya hai.`, 'info');
+          this.log(`Some tiles were found in the scan — the wait has been extended by 3 more minutes for their download.`, 'info');
         } else {
           // Fail whatever is unfinished — EXCEPT a task still inside
           // its own stall-recovery window: its give-up moment (in the
@@ -3263,7 +3263,7 @@ class FlowAutomationEngine {
             });
           }
           if (failedAny) {
-            this.log(`[${this.currentAccount.name}] Render ka intezaar khatam — adhura kaam fail mark ho gaya (recovery scan me bhi kuch nahi mila).`, 'warn');
+            this.log(`[${this.currentAccount.name}] The render wait is over — the incomplete work has been marked failed (nothing was found in the recovery scan either).`, 'warn');
           }
           if (stillRecovering) {
             effectiveMaxWaitSec = ((Date.now() - startMonitorTime) / 1000) + 30;
@@ -3300,7 +3300,7 @@ class FlowAutomationEngine {
           return url.includes('challenge') || url.includes('recaptcha') || bodyText.includes("verify it's you") || bodyText.includes('unusual traffic');
         });
         if (isCaptcha) {
-          this.log('Google ne insaan hone ki jaanch (Captcha) dikhayi hai! Khuli hui Chrome window me use hal karo — tab tak generation ruka rahega.', 'error', { isCaptcha: true });
+          this.log('Google has shown a human verification (Captcha)! Solve it in the open Chrome window — generation will stay paused until then.', 'error', { isCaptcha: true });
         }
 
         const canvasState = await this.page.evaluate((refusalSources) => {
@@ -3433,7 +3433,7 @@ class FlowAutomationEngine {
         // and re-read next poll instead of idling on the editor until
         // the render timeout (the owner's "stuck here" photo).
         if (canvasState.length === 0 && this.page.url().includes('/edit/')) {
-          this.log('Page Flow ke editor ke andar atka hai, project ki tile-wali jagah (grid) par nahi hai — wapas grid par ja rahe hain…', 'warn');
+          this.log('The page is stuck inside Flow\'s editor, not on the project\'s tile area (grid) — going back to the grid…', 'warn');
           await this._returnToProjectGrid();
           continue;
         }
@@ -3545,7 +3545,7 @@ class FlowAutomationEngine {
             task.failed = true;
             releaseTileClaim(task);
             this.onTaskFailed(task, `Google Safety Filter: ${modalViolation}`);
-            this.log(`[Prompt #${task.promptIndex + 1}] Google ki safety policy wala message aaya: "${modalViolation}" — ye prompt aage nahi badhega, queue aage badh rahi hai.`, 'warn');
+            this.log(`[Prompt #${task.promptIndex + 1}] A Google safety policy message came up: "${modalViolation}" — this prompt will not move ahead; the queue is moving on.`, 'warn');
             this.onVideoCompleted({
               id: task.videoId,
               prompt: task.promptText,
@@ -3651,10 +3651,10 @@ class FlowAutomationEngine {
             if (progAct.type === 'stalled') {
               const frozenFor = stallWatch.formatDuration(progAct.stuckForSec);
               const pctNote = progAct.lastPct
-                ? `Aakhri progress: ${progAct.lastPct} — uske baad se koi badlaav nahi.`
-                : 'Flow ne abhi tak koi progress % dikhaya hi nahi.';
+                ? `Last progress: ${progAct.lastPct} — no change since then.`
+                : 'Flow has not shown any progress % yet.';
               const hintNote = progAct.queueHint ? ` ${progAct.queueHint}.` : '';
-              this.log(`[Prompt #${task.promptIndex + 1}] ⚠ Render ATKA hua lag raha hai — ${frozenFor} se progress aage hi nahi badha. ${pctNote}${hintNote} Task abhi fail NAHI ho raha: intezaar ki kul ghadi chal rahi hai; progress phir chal pade to sab aam ki tarah aage badhega.`, 'warn');
+              this.log(`[Prompt #${task.promptIndex + 1}] ⚠ The render seems STUCK — progress has not moved at all for ${frozenFor}. ${pctNote}${hintNote} The task is NOT being failed yet: the total wait clock is running; if progress starts moving again, everything will move ahead as usual.`, 'warn');
               try {
                 this.onRenderStall(task, {
                   accountName: this.currentAccount.name,
@@ -3688,7 +3688,7 @@ class FlowAutomationEngine {
               progressEveryMs: 30000
             });
             if (stallAct.type === 'recovery-started') {
-              this.log(`[Prompt #${task.promptIndex + 1}] Is prompt ka video Flow me abhi tak nahi dikha — lekin iske credits kat chuke hain, isliye FAIL NAHI kar rahe. Project me tile dhoondhna aur intezaar jari rahega (zyada se zyada ~${Math.round(recoveryWindowMs / 60000)} minute).`, 'warn');
+              this.log(`[Prompt #${task.promptIndex + 1}] This prompt's video has not appeared in Flow yet — but its credits have already been deducted, so it is NOT being failed. Searching for the tile in the project and waiting will continue (at most ~${Math.round(recoveryWindowMs / 60000)} minutes).`, 'warn');
               task._lastRecoveryScanAt = Date.now();
               await this._recoveryScanForTask(task, isImageMode);
               try {
@@ -3700,16 +3700,16 @@ class FlowAutomationEngine {
               } catch (e) {}
             } else if (stallAct.type === 'recovery-progress') {
               if (stallAct.logDue) {
-                this.log(`[Prompt #${task.promptIndex + 1}] Render ka intezaar jari hai — ${stallWatch.formatDuration(stallAct.recoveryForSec)} ho gaye, tile abhi tak nahi mili. Project dobara scan ho raha hai; credits kat chuke hain isliye intezaar pura kiya jayega.`, 'info');
+                this.log(`[Prompt #${task.promptIndex + 1}] The render wait is continuing — ${stallWatch.formatDuration(stallAct.recoveryForSec)} have passed, the tile has still not been found. The project is being scanned again; since credits were already deducted, the wait will be completed fully.`, 'info');
               }
               if (!task._lastRecoveryScanAt || Date.now() - task._lastRecoveryScanAt >= this.recoveryScanEveryMs) {
                 task._lastRecoveryScanAt = Date.now();
                 await this._recoveryScanForTask(task, isImageMode);
               }
             } else if (stallAct.type === 'recovered') {
-              this.log(`[Prompt #${task.promptIndex + 1}] Tile mil gayi! Render dobara nazar aa gaya hai (${stallWatch.formatDuration(stallAct.recoveryForSec)} ke intezaar ke baad) — ab iski aage ki progress dekhi jayegi.`, 'success');
+              this.log(`[Prompt #${task.promptIndex + 1}] Tile found! The render is visible again (after a wait of ${stallWatch.formatDuration(stallAct.recoveryForSec)}) — its further progress will now be watched.`, 'success');
             } else if (stallAct.type === 'give-up') {
-              this.log(`[Prompt #${task.promptIndex + 1}] Poori recovery koshish (${stallWatch.formatDuration(stallAct.recoveryForSec)}) ke baad bhi is prompt ki tile Flow project me nahi mili — Flow ne shayad render drop ya reject kar diya. Task fail mark ho raha hai.`, 'warn');
+              this.log(`[Prompt #${task.promptIndex + 1}] Even after the full recovery attempt (${stallWatch.formatDuration(stallAct.recoveryForSec)}), this prompt's tile was not found in the Flow project — Flow may have dropped or rejected the render. The task is being marked failed.`, 'warn');
               task.completed = true;
               task.downloaded = true;
               task.failed = true;
@@ -3741,7 +3741,7 @@ class FlowAutomationEngine {
 
               if (isUnusual && !task.unusualActivityRetried) {
                 task.unusualActivityRetried = true;
-                this.log(`[Prompt #${task.promptIndex + 1}] Google Flow ne "unusual activity" (ajeeb harkat) wala message diya — 8 second ruk kar tile par dobara koshish kar rahe hain…`, 'warn');
+                this.log(`[Prompt #${task.promptIndex + 1}] Google Flow gave an "unusual activity" message — waiting 8 seconds and trying the tile again…`, 'warn');
                 await sleep(8000);
 
                 // v1.7.0: locate by fingerprint-first resolver, and
@@ -3769,7 +3769,7 @@ class FlowAutomationEngine {
                 }, { idx: retryIdx });
 
                 if (retried) {
-                  this.log(`[Prompt #${task.promptIndex + 1}] Tile par Retry button daba diya — ab dobara render ka intezaar ho raha hai…`, 'info');
+                  this.log(`[Prompt #${task.promptIndex + 1}] Pressed the Retry button on the tile — now waiting for the render again…`, 'info');
                   await sleep(3000);
                   continue;
                 }
@@ -3792,7 +3792,7 @@ class FlowAutomationEngine {
                 ? 'Google Flow: Unusual Activity (Cooldown / Delay required)'
                 : (bestTile.failureKind === 'safety' && bestTile.failureReason)
                   ? `Google Safety Filter: ${bestTile.failureReason}`
-                  : 'Flow ne tile par error dikhaya, lekin wajah ka koi saaf jumla tile par nahi mila';
+                  : 'Flow showed an error on the tile, but no clear reason sentence was found on the tile';
               if (isUnusual) task.status = 'Unusual Activity';
 
               this.onTaskFailed(task, failureReason);
@@ -3856,11 +3856,11 @@ class FlowAutomationEngine {
                 try { await task._backendFetchPromise; } catch (e) {}
               }
               if (task.mediaSaved) {
-                this.log(`[Prompt #${task.promptIndex + 1}] Video backend se pehle hi download ho chuka hai — download ki baaki koshishon ki zaroorat nahi.`, 'success');
+                this.log(`[Prompt #${task.promptIndex + 1}] The video has already been downloaded from the backend — no need for the remaining download attempts.`, 'success');
                 if (returnOnAnyComplete) return;
                 continue;
               }
-              this.log(`[Prompt #${task.promptIndex + 1}] Video ban gaya hai (100%) [${this.currentAccount.name}] par — ab download hoga.`, 'success');
+              this.log(`[Prompt #${task.promptIndex + 1}] The video has been generated (100%) on [${this.currentAccount.name}] — now it will be downloaded.`, 'success');
 
               // v2.8.0: download ab backend-first orchestrator hai
               // (downloadTaskMedia): sabse pehle network capture se
@@ -3875,7 +3875,7 @@ class FlowAutomationEngine {
                 dl = await this.downloadTaskMedia(task, downloadFolder, settings, bestTile.tileIndex);
               } catch (dlErr) {
                 const t = plainError.translateError(dlErr);
-                this.log(`[Prompt #${task.promptIndex + 1}] Download ki koshish me rukawat — ${t.plain}.`, 'warn', { rawError: t.raw });
+                this.log(`[Prompt #${task.promptIndex + 1}] A problem came up in the download attempt — ${t.plain}.`, 'warn', { rawError: t.raw });
               }
 
               if (!dl.ok && !task.downloaded) {
@@ -3890,14 +3890,14 @@ class FlowAutomationEngine {
                 // tha — owner ke credits do baar kate the.)
                 task.failureStage = 'download';
                 releaseTileClaim(task);
-                this.onTaskFailed(task, 'Download failed: video Flow par ban gaya tha, lekin koi bhi download rasta uski file save nahi kar paya — dobara sirf download ki koshish hogi, prompt dobara submit NAHI hoga');
+                this.onTaskFailed(task, 'Download failed: the video had been generated on Flow, but no download route could save its file — only the download will be retried; the prompt will NOT be submitted again');
                 this.onVideoCompleted({
                   id: task.videoId,
                   prompt: task.promptText,
                   accountName: this.currentAccount.name,
                   status: 'Download failed',
                   filePath: null,
-                  error: 'Video ban gaya tha, lekin uski file save nahi ho payi — sirf download dobara hoga.',
+                  error: 'The video had been generated, but its file could not be saved — only the download will happen again.',
                   type: settings.type,
                   timestamp: new Date().toLocaleTimeString()
                 });
@@ -3924,12 +3924,12 @@ class FlowAutomationEngine {
           // plain explanation visible, technical text in rawError
           // (Copy Log carries it for diagnosis).
           const t = plainError.translateError(e);
-          this.log(`Render dekhne me ek chhoti rukawat aayi — ${t.plain}. Dobara dekh rahe hain…`, 'warn', { rawError: t.raw });
+          this.log(`A small problem came up while watching the render — ${t.plain}. Watching again…`, 'warn', { rawError: t.raw });
           continue;
         }
         {
           const t = plainError.translateError(e);
-          this.log(`Render dekhna baar-baar fail ho raha hai — ${t.plain}. Adhure tasks ko fail mark kar rahe hain…`, 'error', { rawError: t.raw });
+          this.log(`Watching the render keeps failing — ${t.plain}. Marking the incomplete tasks as failed…`, 'error', { rawError: t.raw });
         }
         for (const t of accountTasks) {
           if (!t.downloaded && !t.completed) {

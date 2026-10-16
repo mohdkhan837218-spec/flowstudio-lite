@@ -63,20 +63,20 @@ function cookieCheckState(outcome, fetchResult, freshAccount) {
     case 'live':
       return { state: 'live', outcome, reason: '' };
     case 'low':
-      return { state: 'ready', outcome, reason: 'Login sahi hai, credits kam hain' };
+      return { state: 'ready', outcome, reason: 'Login OK, credits are low' };
     case 'exhausted':
-      return { state: 'live', outcome, reason: 'Login sahi hai, credits 0 hain' };
+      return { state: 'live', outcome, reason: 'Login OK, credits are 0' };
     case 'need-login':
-      return { state: 'fail', outcome, reason: 'Google ne session reject kiya — cookie dead/expired hai (DBSC)' };
+      return { state: 'fail', outcome, reason: 'Google rejected the session — cookie dead/expired (DBSC)' };
     case 'unconfirmed':
       // v2.1.0: this state is now only reachable AFTER the automatic
       // second look (see runCookieCheckCore) — the wording says so.
-      return { state: 'fail', outcome, reason: 'Do baar check ke baad bhi sign-out confirm nahi hua — Re-check karo' };
+      return { state: 'fail', outcome, reason: 'Sign-out not confirmed after two checks — press Re-check' };
     default:
       if (fetchResult && fetchResult.chromeOpen) {
-        return { state: 'fail', outcome: 'unknown', reason: 'Chrome profile busy hai — window band karke Re-check karo' };
+        return { state: 'fail', outcome: 'unknown', reason: 'Chrome profile is busy — close the window and Re-check' };
       }
-      return { state: 'fail', outcome: 'unknown', reason: 'Check pura nahi ho paya (network / page load)' };
+      return { state: 'fail', outcome: 'unknown', reason: 'The check could not complete (network / page load)' };
   }
 }
 
@@ -241,8 +241,8 @@ async function finishCookieCheck(accountId, accountName, onPhase) {
       recordActivity({
         category: 'login', level: 'info', accountId, accountName,
         stage: 'cookie-check',
-        message: `🍪 Cookie check: ${accountName} — pehla check pakka nahi hua (${firstOutcome === 'unconfirmed' ? 'sign-out dikha' : 'page/network confirm nahi hua'}), khud dobara check kar rahe hain…`,
-        detail: 'Pehli baar Flow khulte hi sign-in page dikhna aksar sirf landing bounce hota hai, dead session nahi. Isiliye final FAIL/Live kehne se pehle ek baar aur wahi live check chalaya jata hai — Verify All wala hi rule.'
+        message: `🍪 Cookie check: ${accountName} — first check not certain (${firstOutcome === 'unconfirmed' ? 'sign-out seen' : 'page/network not confirmed'}), checking again automatically…`,
+        detail: 'Seeing the sign-in page the first time Flow opens is often just a landing bounce, not a dead session. That is why the same live check is run once more before a final FAIL/Live verdict — the same rule as Verify All.'
       });
     }
   });
@@ -253,7 +253,7 @@ async function finishCookieCheck(accountId, accountName, onPhase) {
       category: 'login', level: 'success', accountId, accountName,
       stage: 'cookie-check',
       message: `🍪 Cookie check: ${accountName} — LIVE${typeof (updated && updated.credits) === 'number' ? ` (${updated.credits} credits)` : ''}${check.reason ? ` · ${check.reason}` : ''}`,
-      detail: `Cookie file ke session se Google Flow khula aur login confirm hua${attempts > 1 ? ' (dusri koshish me)' : ''}. Credits ka live number card par dikh raha hai — wahi asli balance hai.`
+      detail: `Google Flow opened with the cookie file's session and the login was confirmed${attempts > 1 ? ' (on the second attempt)' : ''}. The live credit number shows on the account line — that is the real balance.`
     });
   } else {
     recordActivity({
@@ -261,8 +261,8 @@ async function finishCookieCheck(accountId, accountName, onPhase) {
       stage: 'cookie-check',
       reason: check.reason,
       detail: attempts > 1
-        ? 'Cookie check do baar chala — dono baar ka final natija yahi hai. Agar cookie kisi dusri device se copy ki gayi thi to Google ki device-bound session (DBSC) use aksar reject kar deti hai; is account par Sign In karke login karna hi pakka rasta hai.'
-        : 'Cookie check ka final natija. Agar cookie kisi dusri device se copy ki gayi thi to Google ki device-bound session (DBSC) use aksar reject kar deti hai; is account par Sign In karke login karna hi pakka rasta hai.',
+        ? 'The cookie check ran twice — this is the final result both times. If the cookie was copied from another device, Google\'s device-bound session (DBSC) often rejects it; signing in on this account with Sign In is the only certain way.'
+        : 'Final result of the cookie check. If the cookie was copied from another device, Google\'s device-bound session (DBSC) often rejects it; signing in on this account with Sign In is the only certain way.',
       message: `🍪 Cookie check FAIL: ${accountName} — ${check.reason}`
     });
   }
@@ -294,12 +294,12 @@ async function finishCookieImport({ parsed, name, onPhase, fileName = '' }) {
   } catch (e) { /* saving is best-effort; the import itself continues */ }
 
   emitPhase(onPhase, accountId, 'checking', null);
-  recordActivity({ category: 'login', level: 'info', accountId, accountName: name, message: `🍪 Cookie check shuru: ${name}` });
+  recordActivity({ category: 'login', level: 'info', accountId, accountName: name, message: `🍪 Cookie check started: ${name}` });
 
   try {
     await injectCookiesIntoProfile(accountId, parsed.cookies);
   } catch (e) {
-    const check = { state: 'fail', outcome: 'unknown', reason: 'Chrome ne cookies accept nahi kiye (sab expired ho sakte hain)' };
+    const check = { state: 'fail', outcome: 'unknown', reason: 'Chrome did not accept the cookies (all may be expired)' };
     emitPhase(onPhase, accountId, 'done', check);
     recordActivity({ category: 'errors', level: 'error', accountId, accountName: name, message: `🍪 Cookie check FAIL: ${name} — ${check.reason}` });
     return fail(`Cookie import failed: ${e.message}`, { account: dbService.getAccount(accountId), check });
@@ -311,7 +311,7 @@ async function finishCookieImport({ parsed, name, onPhase, fileName = '' }) {
 
   if (res && res.explicitSignedOut) {
     return fail(
-      'Cookies se login nahi hua — Google ne session reject kiya. Is account par "Sign In" dabakar login karo.',
+      'Login failed — Google rejected this session. Press "Sign In" on this line.',
       { account: updated, cookiesRejected: true, check }
     );
   }
@@ -325,8 +325,8 @@ async function finishCookieImport({ parsed, name, onPhase, fileName = '' }) {
       // balance had already dropped to 40). The card's live number is
       // the only count that is ever shown.
       message: updated.status === 'Exhausted'
-        ? 'Cookie login confirmed — account signed in hai. Credits abhi khatam hain (Exhausted); live number card par dikhega.'
-        : 'Cookie login confirmed — account signed in hai. Credits ka live number card par dikh raha hai.',
+        ? 'Login confirmed. Credits are finished (Exhausted) — the live number shows on the line.'
+        : 'Login confirmed. The live credit number shows on the line.',
       account: updated,
       accounts: getAccounts(),
       fileName,
@@ -335,14 +335,14 @@ async function finishCookieImport({ parsed, name, onPhase, fileName = '' }) {
   }
   if (res && res.success && res.unknown) {
     return fail(
-      'Cookies import ho gaye, lekin login abhi confirm nahi ho paya. Thodi der baad is card par "Sync" dabakar dobara check karo.',
+      'Cookies imported, but login is not confirmed yet. Press "Sync" on this line to check again.',
       { account: updated, unverified: true, check }
     );
   }
   if (res && res.chromeOpen) {
     return fail(res.error || 'Chrome is open for this profile. Close it and press Sync on the card.', { account: updated, check });
   }
-  return fail((res && res.error) || 'Cookie import ke baad login verify nahi ho paya. Card par "Sync" dabakar dobara check karo.', { account: updated, check });
+  return fail((res && res.error) || 'Login could not be verified after the cookie import. Press "Sync" on this line to check again.', { account: updated, check });
 }
 
 /**
@@ -391,10 +391,10 @@ async function importAccountFromCookieText({ text, label, onPhase } = {}) {
   const fail = (error, extra = {}) => ({ success: false, error, fileName: '', accounts: getAccounts(), ...extra });
 
   if (typeof text !== 'string' || !text.trim()) {
-    return fail('Pehle cookies ka text paste karo (Netscape cookies.txt ya JSON format me).');
+    return fail('Paste the cookies text first (Netscape cookies.txt or JSON format).');
   }
   if (text.length > 2 * 1024 * 1024) {
-    return fail('Paste kiya hua text bahut bada hai (2 MB se zyada). Sirf cookies wala hissa paste karo.');
+    return fail('The pasted text is too large (over 2 MB). Paste only the cookies part.');
   }
 
   let parsed;
@@ -421,21 +421,21 @@ async function recheckAccountCookies(accountId, onPhase) {
 
   const saved = getCookieStore().load(accountId);
   if (!saved || saved.length === 0) {
-    return { success: false, error: 'Is account ke saved cookies nahi mile. Cookie file se dobara add karo.', account };
+    return { success: false, error: 'No saved cookies found for this account. Add it again from a cookie file.', account };
   }
 
   const busy = await checkProfileBusyAsync(getAccountProfilePath(accountId), accountId);
   if (busy.busy) {
-    return { success: false, error: 'Profile busy hai — is account ki Chrome window band karke dobara try karo.', account };
+    return { success: false, error: 'Profile is busy — close this account\'s Chrome window and try again.', account };
   }
 
   emitPhase(onPhase, accountId, 'checking', null);
-  recordActivity({ category: 'login', level: 'info', accountId, accountName: name, message: `🍪 Cookie re-check shuru: ${name}` });
+  recordActivity({ category: 'login', level: 'info', accountId, accountName: name, message: `🍪 Cookie re-check started: ${name}` });
 
   try {
     await injectCookiesIntoProfile(accountId, saved);
   } catch (e) {
-    const check = { state: 'fail', outcome: 'unknown', reason: 'Chrome ne saved cookies accept nahi kiye' };
+    const check = { state: 'fail', outcome: 'unknown', reason: 'Chrome did not accept the saved cookies' };
     emitPhase(onPhase, accountId, 'done', check);
     recordActivity({ category: 'errors', level: 'error', accountId, accountName: name, message: `🍪 Cookie re-check FAIL: ${name} — ${check.reason}` });
     return { success: false, error: `Cookie re-check failed: ${e.message}`, account: dbService.getAccount(accountId), check };

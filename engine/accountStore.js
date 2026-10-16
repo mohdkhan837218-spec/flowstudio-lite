@@ -122,10 +122,10 @@ async function openLoginWindow(accountId, onLoggedInCallback) {
   }
   if (busy.busy) {
     if (busy.reason === 'in-use') {
-      return { success: false, profileBusy: true, error: 'Is account par abhi video ban raha hai (generation chal rahi hai). Wo khatam hote hi Sign In dabayein.' };
+      return { success: false, profileBusy: true, error: 'A video is generating on this account right now. Press Sign In once it finishes.' };
     }
     const pidNote = busy.holderPids && busy.holderPids.length ? ` (PID ${busy.holderPids.join(', ')})` : '';
-    return { success: false, profileBusy: true, error: `Ek purana Chrome${pidNote} is profile ko pakde hue hai aur khud saaf nahi ho paya. Task Manager (Ctrl+Shift+Esc) me wo chrome.exe End task karke phir Sign In dabayein.` };
+    return { success: false, profileBusy: true, error: `An old Chrome${pidNote} is holding this profile and could not be cleared automatically. End that chrome.exe in Task Manager (Ctrl+Shift+Esc), then press Sign In.` };
   }
 
   // v1.3: the busy check passed, so no Chrome holds this profile right
@@ -372,7 +372,7 @@ async function importFromInstalledChrome(srcProfileDirName, destAccountId) {
     recordActivity({
       category: 'login', level: 'info', accountId: acc.id,
       accountName: acc.googleName || acc.name,
-      message: `Chrome profile import: ${acc.googleName || acc.name}${cookiesLocked ? ' (cookies locked thay — Sync karke verify karo)' : ''}`
+      message: `Chrome profile import: ${acc.googleName || acc.name}${cookiesLocked ? ' (cookies were locked — verify with Sync)' : ''}`
     });
   }
   return { success: true, account: acc, accounts: getAccounts(), cookiesLocked };
@@ -484,7 +484,7 @@ async function fetchRealCredits(accountId) {
           success: false,
           chromeOpen: true,
           error: busy.reason === 'in-use'
-            ? 'Is account par abhi ek aur kaam chal raha hai (Sync ya generation). Wo khatam hote hi Sync phir dabayein.'
+            ? 'Another job is running on this account (Sync or generation). Press Sync again once it finishes.'
             : 'Google Chrome is currently open for this profile. Please close that Chrome window, then click Sync again.',
           accounts: getAccounts()
         };
@@ -560,8 +560,8 @@ async function fetchRealCredits(accountId) {
           level: res.outcome === 'need-login' ? 'error' : 'warn',
           accountId, accountName: accName,
           message: res.outcome === 'need-login'
-            ? `Sign-out confirm: ${accName} — Need Login (do strike)`
-            : `Sign-out dikha (strike 1): ${accName} — Unconfirmed, balance safe hai`
+            ? `Sign-out confirmed: ${accName} — Need Login (two strikes)`
+            : `Sign-out seen (strike 1): ${accName} — Unconfirmed, balance is safe`
         });
         return {
           success: false,
@@ -644,7 +644,7 @@ async function fetchRealCredits(accountId) {
           const accName = (res.account && (res.account.googleName || res.account.name)) || 'Account';
           recordActivity({
             category: 'credits', level: 'info', accountId, accountName: accName,
-            message: `Live balance: ${accName} — ${result.credits} credits${prevAcc && typeof prevAcc.credits === 'number' ? ` (pehle ${prevAcc.credits})` : ''}`
+            message: `Live balance: ${accName} — ${result.credits} credits${prevAcc && typeof prevAcc.credits === 'number' ? ` (previously ${prevAcc.credits})` : ''}`
           });
         }
         if (result.email || result.name) {

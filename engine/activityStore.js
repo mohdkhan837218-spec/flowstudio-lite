@@ -169,7 +169,7 @@ function formatEntryForCopy(entry) {
   if (entry.category) lines.push(`Category: ${entry.category}`);
   if (entry.level) lines.push(`Level: ${entry.level}`);
   if (entry.detail) lines.push(`Detail: ${entry.detail}`);
-  if (entry.reason) lines.push(`Wajah (reason): ${entry.reason}`);
+  if (entry.reason) lines.push(`Reason: ${entry.reason}`);
   if (entry.taskId) lines.push(`Task ID: ${entry.taskId}`);
   return lines.join('\n');
 }
@@ -214,7 +214,7 @@ function formatEntryDetailLine(entry) {
   if (entry.accountName) bits.push(`Account: ${entry.accountName}`);
   if (entry.promptIndex !== null && entry.promptIndex !== undefined) bits.push(`Prompt #${entry.promptIndex + 1}`);
   if (entry.stage) bits.push(`Stage: ${entry.stage}`);
-  if (entry.reason) bits.push(`Wajah: ${entry.reason}`);
+  if (entry.reason) bits.push(`Reason: ${entry.reason}`);
   return bits.length ? `${base} — ${bits.join(' · ')}` : base;
 }
 

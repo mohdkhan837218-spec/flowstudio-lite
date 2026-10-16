@@ -64,17 +64,17 @@ function describeState(state, facts = {}) {
   switch (state) {
     case 'generating':
       return facts.percentage
-        ? `[Prompt #${n}] Flow par video ban raha hai — ${facts.percentage} ho gaya hai, kul ${waited} ka intezaar.`
-        : `[Prompt #${n}] Flow par video ban raha hai — tile project me dikhai de rahi hai, kul ${waited} ka intezaar (kabhi-kabhi Flow percentage nahi dikhata, video phir bhi banta rehta hai).`;
+        ? `[Prompt #${n}] The video is generating on Flow — ${facts.percentage} done, total wait ${waited}.`
+        : `[Prompt #${n}] The video is generating on Flow — the tile is visible in the project, total wait ${waited} (sometimes Flow shows no percentage; the video still keeps generating).`;
     case 'ready':
-      return `[Prompt #${n}] Video Flow par ban chuka hai — ab download ho raha hai (kul ${waited} lage).`;
+      return `[Prompt #${n}] The video has been generated on Flow — now downloading (total time taken ${waited}).`;
     case 'failed':
-      return `[Prompt #${n}] Flow ne is video ko fail dikhaya hai — wajah neeche wali line me hai, is par lamba intezaar NAHI hoga.`;
+      return `[Prompt #${n}] Flow has marked this video as failed — the reason is in the line below; there will be NO long wait for this one.`;
     case 'absent-active':
-      return `[Prompt #${n}] Is prompt ki tile abhi pehchani nahi gayi, lekin Flow par kuch ban raha hai (kul ${waited}) — tile dhoondhna jari hai.`;
+      return `[Prompt #${n}] This prompt's tile has not been identified yet, but something is generating on Flow (total ${waited}) — the search for the tile is continuing.`;
     case 'absent':
     default:
-      return `[Prompt #${n}] Flow ne abhi tak is prompt ki koi tile nahi banayi (kul ${waited}) — ho sakta hai prompt Flow par accept hi nahi hua; tile ki talaash (recovery scan) jari hai.`;
+      return `[Prompt #${n}] Flow has not created any tile for this prompt yet (total ${waited}) — the prompt may not have been accepted on Flow at all; the tile search (recovery scan) is continuing.`;
   }
 }
 

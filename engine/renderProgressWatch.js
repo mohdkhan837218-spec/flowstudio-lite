@@ -47,10 +47,10 @@ const DEFAULT_STALL_AFTER_MS = 3 * 60 * 1000;
 function queueHintFromText(text) {
   const t = String(text || '').toLowerCase();
   if (!t) return null;
-  if (/\bqueue\b/.test(t) || t.includes('in line')) return 'Flow ki tile par queue (line) ka haal dikh raha hai';
-  if (t.includes('high demand') || t.includes('lots of people') || t.includes('many people')) return 'Flow ki tile par zyada bheed (high demand) ka haal dikh raha hai';
-  if (t.includes('try again later') || t.includes('come back later')) return 'Flow ki tile par "baad me try karo" type ka haal dikh raha hai';
-  if (t.includes('taking longer') || t.includes('longer than usual')) return 'Flow ki tile khud keh rahi hai ki aam se zyada time lag raha hai';
+  if (/\bqueue\b/.test(t) || t.includes('in line')) return 'The Flow tile shows a queue (line) state';
+  if (t.includes('high demand') || t.includes('lots of people') || t.includes('many people')) return 'The Flow tile shows a high-demand state';
+  if (t.includes('try again later') || t.includes('come back later')) return 'The Flow tile shows a "try again later" type of state';
+  if (t.includes('taking longer') || t.includes('longer than usual')) return 'The Flow tile itself says it is taking longer than usual';
   return null;
 }
 

@@ -21,39 +21,39 @@
 const RULES = [
   {
     test: /cannot read properties of (null|undefined) \(reading 'evaluate'\)/i,
-    plain: 'Flow ka page beech me band ya badal gaya tha (page ka hissa gayab ho gaya)'
+    plain: 'The Flow page closed or changed midway (part of the page disappeared)'
   },
   {
     test: /(reading 'evaluate'|execution context was destroyed|context was destroyed)/i,
-    plain: 'Flow ka page beech me refresh/badla gaya tha'
+    plain: 'The Flow page was refreshed/changed midway'
   },
   {
     test: /(target closed|session closed|connection closed|protocol error.*target|target.*crashed)/i,
-    plain: 'Chrome window beech me band ho gayi thi'
+    plain: 'The Chrome window closed midway'
   },
   {
     test: /(waiting for selector|waiting failed|waiting for function|waiting for target)/i,
-    plain: 'Flow ka page poori tarah load nahi hua — jiska intezaar tha wo hissa page par nahi mila'
+    plain: 'The Flow page did not load fully — the part being waited for was not found on the page'
   },
   {
     test: /(navigation timeout|net::err|err_aborted|err_timed_out|err_internet|err_name_not_resolved|err_connection)/i,
-    plain: 'Flow ka page khulne me atak gaya (internet ya page bahut slow tha)'
+    plain: 'The Flow page got stuck while opening (the internet or the page was very slow)'
   },
   {
     test: /protocol error/i,
-    plain: 'Chrome se baat-cheet (connection) beech me tooti thi'
+    plain: 'The connection with Chrome broke midway'
   },
   {
     test: /(no element found|node is either not clickable|node is not visible|not clickable at point)/i,
-    plain: 'Flow ke page par wo button/hissa mila hi nahi jis par kaam hona tha (page ka design badla ho sakta hai)'
+    plain: 'The button/part that was needed was not found on the Flow page at all (the page design may have changed)'
   },
   {
     test: /(detached from document|node is detached)/i,
-    plain: 'Flow ke page ka hissa beech me badal gaya tha'
+    plain: 'Part of the Flow page changed midway'
   }
 ];
 
-const GENERIC_PLAIN = 'Ek takneeki rukawat aayi';
+const GENERIC_PLAIN = 'A technical problem occurred';
 
 /**
  * Translate an error (Error object, message string, or anything) into

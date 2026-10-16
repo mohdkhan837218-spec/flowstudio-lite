@@ -99,8 +99,8 @@ function launchPlan(backgroundEnabled) {
 /** Short label for logs/Activity (what mode a run used). */
 function describeMode(backgroundEnabled) {
   return backgroundEnabled
-    ? 'Background (asal Chrome hi hai — window screen se bahar, normal haalat me; screen par nahi dikhegi)'
-    : 'Visible (browser screen par dikhega)';
+    ? 'Background (it is the real Chrome — the window stays off-screen in its normal state; it will not be visible on screen)'
+    : 'Visible (the browser will be visible on screen)';
 }
 
 module.exports = {

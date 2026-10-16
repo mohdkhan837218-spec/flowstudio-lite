@@ -88,7 +88,7 @@ class WorkerPool {
     try {
       const n = dbService.recoverInterruptedTasks();
       if (n > 0) {
-        this.log(`Pichle band hue session ke ${n} adhure task mile — wo dobara pending kar diye gaye hain; har ek ko Flow me pehle check kiya jayega, bina check dobara submit nahi hoga.`, 'warn');
+        this.log(`Found ${n} incomplete tasks from the previous closed session — they have been made pending again; each one will be checked in Flow first and will NOT be resubmitted without a check.`, 'warn');
       }
     } catch (e) {}
   }
@@ -104,7 +104,7 @@ class WorkerPool {
     }
     // v2.4.0: this pool line is the ONLY pause line (the engines no
     // longer log their own — the owner's log showed every pause twice).
-    this.log('Saari queue rok di gayi hai (PAUSED) — saare workers ruke hain. Jo videos pehle se ban rahe hain, wo poori tarah download hokar hi rukenge.', 'warn');
+    this.log('The whole queue has been stopped (PAUSED) — all workers are stopped. Videos that are already generating will stop only after downloading completely.', 'warn');
   }
 
   resume() {
@@ -112,7 +112,7 @@ class WorkerPool {
     for (const engine of this.activeWorkers.values()) {
       try { engine.resume(); } catch (e) {}
     }
-    this.log('Queue dobara shuru ho gayi hai (RESUMED).', 'success');
+    this.log('The queue has started again (RESUMED).', 'success');
   }
 
   async stop() {
@@ -131,7 +131,7 @@ class WorkerPool {
     }
     this.activeWorkers.clear();
     this.assignedAccounts.clear();
-    this.log('Queue band kar di gayi hai (STOPPED).', 'warn');
+    this.log('The queue has been closed (STOPPED).', 'warn');
   }
 
   _creditPort() {
@@ -170,7 +170,7 @@ class WorkerPool {
           recordActivity({
             category: 'credits', level: 'warn', accountId, accountName: name,
             stage: 'cooldown',
-            detail: `Google ne is account par "unusual activity" kaha, isliye account ko ${r && r.minutes ? r.minutes : '?'} minute ki timed rest (cooldown) par rakha gaya hai — credits bilkul surakshit hain, kuch kata nahi. Rest khatam hote hi account khud rotation me wapas aa jayega. Baar-baar cooldown lage to rest lambi hoti hai (30 min → 2 ghante → 12 ghante).`,
+            detail: `Google reported "unusual activity" on this account, so the account has been put on a timed rest (cooldown) of ${r && r.minutes ? r.minutes : '?'} minutes — credits are completely safe, nothing was deducted. As soon as the rest ends, the account will return to rotation by itself. If cooldowns keep happening, the rest gets longer (30 min → 2 hours → 12 hours).`,
             message: `Cooldown: ${name} — unusual activity, ${r && r.minutes ? r.minutes : '?'} min rest`
           });
         } catch (e) {}
@@ -260,8 +260,8 @@ class WorkerPool {
             stage: 'recovery',
             taskId: task.taskId || null,
             promptIndex: typeof task.promptIndex === 'number' ? task.promptIndex : null,
-            detail: `Ye prompt app band hone se pehle Flow ko bheja ja chuka tha. Dobara submit NAHI kiya gaya (isse credits do baar kat-te) — Flow project me iski tile dhoondhi gayi aur wahi video download ho gaya. File: ${result.fileName}`,
-            message: `Recovery: Prompt #${(task.promptIndex || 0) + 1} ka video Flow me mil gaya — bina extra credits download (${result.fileName})`
+            detail: `This prompt had already been sent to Flow before the app closed. It was NOT submitted again (that would deduct credits twice) — its tile was found in the Flow project and that same video was downloaded. File: ${result.fileName}`,
+            message: `Recovery: Prompt #${(task.promptIndex || 0) + 1}'s video was found in Flow — downloaded without extra credits (${result.fileName})`
           });
           this.onTaskUpdate({
             taskId: task.taskId,
@@ -287,7 +287,7 @@ class WorkerPool {
           ready = (st === 'READY');
         }
         if (!ready) {
-          this.log(`Recovery: [${account.name}] ka Flow project khul nahi paya, isliye ${group.length} purane task pending hi rahenge — baad me Resume dabakar dobara check kar lena. Kuch bhi dobara submit NAHI kiya gaya.`, 'warn');
+          this.log(`Recovery: [${account.name}]'s Flow project could not be opened, so ${group.length} old tasks will stay pending — press Resume later to check again. Nothing was resubmitted.`, 'warn');
           for (const row of group) handled.add(row.id);
           continue;
         }
@@ -308,17 +308,17 @@ class WorkerPool {
           try { res = await engine.reconcileRecoveredTask(taskObj, downloadFolder, settings); } catch (e) { res = null; }
           try { dbService.setTaskNeedsCheck(row.id, 0); } catch (e) {}
           if (res && res.found && res.downloaded) {
-            this.log(`Recovery: Prompt #${row.prompt_index + 1} ka video [${account.name}] ke Flow project me pehle se maujood tha — wahi download kar liya. Dobara credits nahi kate.`, 'success');
+            this.log(`Recovery: Prompt #${row.prompt_index + 1}'s video already existed in [${account.name}]'s Flow project — that same one was downloaded. No credits were deducted again.`, 'success');
           } else if (res && res.found) {
             const reason = 'Recovered after restart: this prompt\'s tile exists in the Flow project but no downloadable video was found (it may still be rendering, or it failed on Flow). It was NOT re-submitted, to avoid a double credit charge — download it from the Flow project, or use Retry.';
             try { dbService.failTask(row.id, reason); } catch (e) {}
             this.onTaskUpdate({ taskId: row.id, promptIndex: row.prompt_index, promptText: row.prompt_text, status: 'failed', reason });
-            this.log(`Recovery: Prompt #${row.prompt_index + 1} ki tile project me mili, lekin us par download hone layak video nahi mila. Fail mark kar diya (dobara submit NAHI kiya).`, 'warn');
+            this.log(`Recovery: Prompt #${row.prompt_index + 1}'s tile was found in the project, but no downloadable video was found on it. Marked as failed (NOT resubmitted).`, 'warn');
           } else {
             const reason = 'Interrupted by an app close. No matching video was found in the account\'s latest Flow project, so it was NOT auto-resubmitted (that could double-charge credits). Use Retry to run it again.';
             try { dbService.failTask(row.id, reason); } catch (e) {}
             this.onTaskUpdate({ taskId: row.id, promptIndex: row.prompt_index, promptText: row.prompt_text, status: 'failed', reason });
-            this.log(`Recovery: Prompt #${row.prompt_index + 1} se milta-julta koi video Flow project me nahi mila. Fail mark kar diya (dobara submit NAHI kiya).`, 'warn');
+            this.log(`Recovery: No video matching Prompt #${row.prompt_index + 1} was found in the Flow project. Marked as failed (NOT resubmitted).`, 'warn');
           }
         }
       } finally {
@@ -373,7 +373,7 @@ class WorkerPool {
         pendingTasks = pendingTasks.filter(t => !handled.has(t.id));
         if (pendingTasks.length === 0) {
           this.onProgress({ status: 'Completed' });
-          this.log('Recovery check pura ho gaya — ab koi prompt generate karne ko nahi bacha.', 'success');
+          this.log('Recovery check is complete — no prompt is left to generate now.', 'success');
           return;
         }
       }
@@ -389,14 +389,14 @@ class WorkerPool {
       if (this.liveOnly) {
         pool = pool.filter(a => WorkerPool.LIVE_READY_STATUSES.has(a.status));
         if (pool.length === 0) {
-          this.log('"Sirf live accounts chalao" ON hai, lekin koi Live / Ready account nahi mila. Accounts page par pehle Verify All karke account Live karo, ya wo toggle band karke dobara chalao.', 'error');
+          this.log('"Only run live accounts" is ON, but no Live / Ready account was found. First make an account Live with Verify All on the Accounts page, or turn that toggle off and run again.', 'error');
           this.onProgress({ status: 'NoAccounts' });
           return;
         }
       }
 
       if (pool.length === 0) {
-        this.log('Koi Google account uplabdh nahi hai (sab par login chahiye). Accounts page se ek account jodo aur Sign In karo.', 'error');
+        this.log('No Google account is available (all need login). Add an account from the Accounts page and Sign In.', 'error');
         this.onProgress({ status: 'NoAccounts' });
         return;
       }
@@ -413,7 +413,7 @@ class WorkerPool {
       // 1 tha, isliye 1 worker chala, aur app ne wajah kahin nahi
       // dikhayi. Ab seema / live / asal workers teeno har jagah ek
       // jaise shabdon me milte hain (log + Generate status line).
-      this.log(`Queue shuru ho rahi hai: ${pendingTasks.length} prompt · Seema (Settings se): ${this.concurrency} · Live uplabdh: ${pool.length} · Workers chalenge: ${actualWorkersCount}`, 'info');
+      this.log(`Queue is starting: ${pendingTasks.length} prompts · Limit (from Settings): ${this.concurrency} · Live available: ${pool.length} · Workers will run: ${actualWorkersCount}`, 'info');
       try {
         this.onProgress({
           status: WorkerPool.buildRunStatusText({ total: pendingTasks.length, active: 0, done: 0, failed: 0 }),
@@ -426,9 +426,9 @@ class WorkerPool {
 
       // v2.0.0 Activity: run start (+ resume note).
       if (opts && Array.isArray(opts.existingTasks) && opts.existingTasks.length > 0) {
-        recordActivity({ category: 'system', level: 'info', message: `Queue resume: ${pendingTasks.length} pending prompt(s) dobara chal rahe hain` });
+        recordActivity({ category: 'system', level: 'info', message: `Queue resume: ${pendingTasks.length} pending prompt(s) are running again` });
       }
-      recordActivity({ category: 'generation', level: 'info', message: `Generation shuru: ${pendingTasks.length} prompt(s) · ${actualWorkersCount} worker(s) parallel` });
+      recordActivity({ category: 'generation', level: 'info', message: `Generation started: ${pendingTasks.length} prompt(s) · ${actualWorkersCount} worker(s) in parallel` });
 
       const creditPort = this._creditPort();
       let completedCount = 0;
@@ -538,17 +538,17 @@ class WorkerPool {
             taskId: rowTask.id,
             promptIndex: rowTask.prompt_index,
             reason,
-            detail: `Prompt #${rowTask.prompt_index + 1} ka video [${accountName || 'account'}] par BAN GAYA tha aur credits kat chuke the — sirf uski file save (download) nahi ho payi. Task FAIL NAHI kiya gaya aur prompt DOBARA SUBMIT bhi NAHI hoga (dobara charge zero). Ab usi account ke project me usi tile se SIRF download ki saari ranneetiyan dobara chalengi. Failover isiliye nahi hua: bani hui tile sirf ISI account ke project me hai, dusre account par hoti hi nahi.`,
-            message: `Download fail: Prompt #${rowTask.prompt_index + 1} — video ban gaya tha, sirf download dobara hoga (koi naya charge nahi)`
+            detail: `Prompt #${rowTask.prompt_index + 1}'s video HAD been generated on [${accountName || 'account'}] and credits had been deducted — only its file (download) could not be saved. The task was NOT failed and the prompt will NOT be SUBMITTED AGAIN (zero double charge). Now all download strategies will run again from that same tile in that same account's project. Failover did not happen for this reason: the generated tile exists only in THIS account's project; it does not exist on any other account.`,
+            message: `Download fail: Prompt #${rowTask.prompt_index + 1} — the video had been generated, only the download will happen again (no new charge)`
           });
-          this.log(`Prompt #${rowTask.prompt_index + 1}: video ban gaya tha — sirf download fail hua. Prompt DOBARA submit NAHI hoga; usi tile se sirf download ki dobara koshish hogi (koi naya charge nahi).`, 'warn');
+          this.log(`Prompt #${rowTask.prompt_index + 1}: the video had been generated — only the download failed. The prompt will NOT be submitted again; only the download will be retried from the same tile (no new charge).`, 'warn');
           this.onTaskUpdate({
             taskId: rowTask.id,
             promptIndex: rowTask.prompt_index,
             promptText: rowTask.prompt_text,
             tag: rowTask.prompt_tag || '',
             status: 'pending',
-            reason: 'Video ban gaya tha — sirf download dobara hoga (koi naya charge nahi)'
+            reason: 'The video had been generated — only the download will happen again (no new charge)'
           });
           noteTaskSettled(rowTask.id, 'moved');
           return 'download-retry';
@@ -571,16 +571,16 @@ class WorkerPool {
                 taskId: rowTask.id,
                 promptIndex: rowTask.prompt_index,
                 reason,
-                detail: `Prompt #${rowTask.prompt_index + 1} [${accountName || 'account'}] par is wajah se ruka: ${reason}. Ye galti account ki taraf se hai (prompt ki nahi), isliye task khatam nahi kiya gaya — ab ye [${otherAccount.name}] par bheja jayega (koshish ${verdict.tries + 1}/${verdict.maxTries}). Charge sirf usi account par lagega jis par video asal me banega.`,
-                message: `Failover: Prompt #${rowTask.prompt_index + 1}${accountName ? ` [${accountName}]` : ''} fail (${verdict.kind || 'error'}) — dusre account par try hoga (try ${verdict.tries + 1}/${verdict.maxTries})`
+                detail: `Prompt #${rowTask.prompt_index + 1} stopped on [${accountName || 'account'}] for this reason: ${reason}. This fault is from the account's side (not the prompt's), so the task was not ended — now it will be sent to [${otherAccount.name}] (try ${verdict.tries + 1}/${verdict.maxTries}). The charge will apply only on the account where the video actually gets generated.`,
+                message: `Failover: Prompt #${rowTask.prompt_index + 1}${accountName ? ` [${accountName}]` : ''} failed (${verdict.kind || 'error'}) — will be tried on another account (try ${verdict.tries + 1}/${verdict.maxTries})`
               });
-              this.log(`Failover: Prompt #${rowTask.prompt_index + 1} dusre account [${otherAccount.name}] par try hoga (koshish ${verdict.tries + 1}/${verdict.maxTries}) — wajah: ${reason}`, 'warn');
+              this.log(`Failover: Prompt #${rowTask.prompt_index + 1} will be tried on another account [${otherAccount.name}] (try ${verdict.tries + 1}/${verdict.maxTries}) — reason: ${reason}`, 'warn');
               this.onTaskUpdate({
                 taskId: rowTask.id,
                 promptIndex: rowTask.prompt_index,
                 promptText: rowTask.prompt_text,
                 status: 'pending',
-                reason: `Failover — dusra account try hoga (try ${verdict.tries + 1}/${verdict.maxTries})`
+                reason: `Failover — another account will be tried (try ${verdict.tries + 1}/${verdict.maxTries})`
               });
               noteTaskSettled(rowTask.id, 'moved');
               return 'failover';
@@ -614,16 +614,16 @@ class WorkerPool {
                   taskId: rowTask.id,
                   promptIndex: rowTask.prompt_index,
                   reason,
-                  detail: `Prompt #${rowTask.prompt_index + 1} [${accountName || 'account'}] par is wajah se ruka: ${reason}. Dusra koi eligible account is waqt mojud NAHI hai, lekin ye account abhi bhi Live hai aur credits bache hain — isliye task khatam NAHI kiya gaya. ${backoffSec} second ruk kar ISI account par dobara try hoga (koshish ${attemptsUsed + 1}/${this.maxSameAccountAttempts}).`,
-                  message: `Same-account retry: Prompt #${rowTask.prompt_index + 1}${accountName ? ` [${accountName}]` : ''} — dusra account nahi, isi par ${backoffSec}s baad dobara try (koshish ${attemptsUsed + 1}/${this.maxSameAccountAttempts})`
+                  detail: `Prompt #${rowTask.prompt_index + 1} stopped on [${accountName || 'account'}] for this reason: ${reason}. No other eligible account is available right now, but this account is still Live and has credits left — so the task was NOT ended. After waiting ${backoffSec} seconds, it will be tried again on THIS SAME account (try ${attemptsUsed + 1}/${this.maxSameAccountAttempts}).`,
+                  message: `Same-account retry: Prompt #${rowTask.prompt_index + 1}${accountName ? ` [${accountName}]` : ''} — no other account, will retry on this one after ${backoffSec}s (try ${attemptsUsed + 1}/${this.maxSameAccountAttempts})`
                 });
-                this.log(`Prompt #${rowTask.prompt_index + 1}: dusra koi account uplabdh nahi hai — isi account [${accountName || ''}] par ${backoffSec} second ruk kar dobara try hoga (koshish ${attemptsUsed + 1}/${this.maxSameAccountAttempts}). Wajah: ${reason}`, 'warn');
+                this.log(`Prompt #${rowTask.prompt_index + 1}: no other account is available — after waiting ${backoffSec} seconds it will be tried again on this account [${accountName || ''}] (try ${attemptsUsed + 1}/${this.maxSameAccountAttempts}). Reason: ${reason}`, 'warn');
                 this.onTaskUpdate({
                   taskId: rowTask.id,
                   promptIndex: rowTask.prompt_index,
                   promptText: rowTask.prompt_text,
                   status: 'pending',
-                  reason: `Dusra account nahi — isi account par dobara try hoga (${backoffSec}s baad, koshish ${attemptsUsed + 1}/${this.maxSameAccountAttempts})`
+                  reason: `No other account — will be tried again on this same account (after ${backoffSec}s, try ${attemptsUsed + 1}/${this.maxSameAccountAttempts})`
                 });
                 noteTaskSettled(rowTask.id, 'moved');
                 return 'failover';
@@ -644,8 +644,8 @@ class WorkerPool {
             promptIndex: rowTask.prompt_index,
             reason,
             detail: kind === 'prompt-policy'
-              ? `Prompt #${rowTask.prompt_index + 1} ko Google ki safety policy ne roka. Ye prompt ki taraf ki galti hai — har account par yahi hoga, isliye kisi aur account par try karke credits barbaad NAHI kiye gaye. Prompt badal kar dobara bhejo. Rukne ki wajah: ${reason}`
-              : `Prompt #${rowTask.prompt_index + 1} aakhirkaar fail ho gaya — saari allowed koshishen (dusre accounts + same-account retry) khatam ho gayi ya koi usable account nahi bacha. Aakhri wajah: ${reason}. Is task ko History se Retry kiya ja sakta hai.`,
+              ? `Prompt #${rowTask.prompt_index + 1} was stopped by Google's safety policy. This fault is from the prompt's side — the same will happen on every account, so credits were NOT wasted by trying other accounts. Change the prompt and send it again. Reason for stopping: ${reason}`
+              : `Prompt #${rowTask.prompt_index + 1} finally failed — all allowed tries (other accounts + same-account retry) are over, or no usable account is left. Last reason: ${reason}. This task can be retried from History.`,
             message: `Task FAIL: Prompt #${rowTask.prompt_index + 1} — ${reason}`
           });
         }
@@ -670,8 +670,8 @@ class WorkerPool {
       //                   dobara try karega. Paid render chhoda nahi
       //                   gaya, jhoota fail bhi nahi likha gaya.
       const formatAttempts = (attempts) => {
-        if (!Array.isArray(attempts) || attempts.length === 0) return 'koi ranneeti record nahi hui';
-        return attempts.map(a => `${a.strategy}: ${a.ok ? 'kaam kar gayi' : `fail (${a.note || 'wajah record nahi'})`}`).join(' · ');
+        if (!Array.isArray(attempts) || attempts.length === 0) return 'no strategy was recorded';
+        return attempts.map(a => `${a.strategy}: ${a.ok ? 'worked' : `failed (${a.note || 'reason not recorded'})`}`).join(' · ');
       };
       const processDownloadRetries = async (engine) => {
         const mine = deferredDownloadRetries.filter(e => e.owner === engine);
@@ -681,28 +681,28 @@ class WorkerPool {
           if (this.isStopping) continue; // row pending + needs_check hai — Resume sambhalega
           const { rowTask, engineTask } = entry;
           if (!engineTask) continue; // engine task ke bagair tile ki pehchan namumkin — Resume check-only karega
-          this.log(`Prompt #${rowTask.prompt_index + 1}: sirf-download ki dobara koshish shuru — usi tile se, koi naya submit/charge nahi…`, 'info');
+          this.log(`Prompt #${rowTask.prompt_index + 1}: download-only retry starting — from the same tile, no new submit/charge…`, 'info');
           let outcome = null;
           for (let round = 1; round <= 2; round++) {
             try {
               outcome = await engine.retryDownloadForTask(engineTask, downloadFolder, settings);
             } catch (e) {
               const t = plainError.translateError(e);
-              this.log(`Prompt #${rowTask.prompt_index + 1}: download-retry me rukawat — ${t.plain}.`, 'warn', { rawError: t.raw });
+              this.log(`Prompt #${rowTask.prompt_index + 1}: problem during the download-retry — ${t.plain}.`, 'warn', { rawError: t.raw });
               outcome = { status: 'download-failed', attempts: engineTask.downloadAttempts || [] };
             }
             if (!outcome || outcome.status !== 'download-failed') break;
             if (round < 2 && !this.isStopping) {
-              this.log(`Prompt #${rowTask.prompt_index + 1}: download phir nahi hua — thoda ruk kar ek aur baar SIRF download try hoga…`, 'warn');
+              this.log(`Prompt #${rowTask.prompt_index + 1}: the download still did not happen — after a short wait, ONLY the download will be tried once more…`, 'warn');
               await sleep(3000);
             }
           }
           if (!outcome) continue;
           if (outcome.status === 'downloaded') {
             try { dbService.setTaskNeedsCheck(rowTask.id, 0); } catch (e) {}
-            this.log(`Prompt #${rowTask.prompt_index + 1}: download-retry safal — wahi bana hua video save ho gaya, koi naya charge nahi laga.`, 'success');
+            this.log(`Prompt #${rowTask.prompt_index + 1}: download-retry succeeded — the same generated video was saved, no new charge was applied.`, 'success');
           } else if (outcome.status === 'tile-missing') {
-            const reason = 'Bana hua video project me nahi mila (lost render): poore project ko scan karke bhi is prompt ki tile nahi mili — dobara sirf download mumkin nahi tha, aur prompt khamoshi se dobara submit NAHI kiya gaya.';
+            const reason = 'The generated video was not found in the project (lost render): even after scanning the whole project, this prompt\'s tile was not found — a download-only retry was not possible, and the prompt was NOT quietly resubmitted.';
             try { dbService.setTaskNeedsCheck(rowTask.id, 0); } catch (e) {}
             try { dbService.failTask(rowTask.id, reason); } catch (e) {}
             recordActivity({
@@ -711,8 +711,8 @@ class WorkerPool {
               taskId: rowTask.id,
               promptIndex: rowTask.prompt_index,
               reason,
-              detail: `Prompt #${rowTask.prompt_index + 1} ka video [${entry.accountName || 'account'}] par bana tha aur credits kate the, lekin download-retry ke liye jab project dobara scan hua to uski tile kahin NAHI mili (ho sakta hai Flow ne use hata diya ho, ya project badal gaya ho). Task ko 'lost-render' ke roop me fail kiya gaya hai. Prompt khamoshi se DOBARA SUBMIT NAHI kiya gaya — dobara banana ho to Sequence report ke "Sirf Missing Dobara Banao" se khud chalao, taaki charge tumhare faisle se lage.`,
-              message: `Lost render: Prompt #${rowTask.prompt_index + 1} — bani hui tile project me nahi mili, resubmit NAHI kiya gaya`
+              detail: `Prompt #${rowTask.prompt_index + 1}'s video had been made on [${entry.accountName || 'account'}] and credits had been deducted, but when the project was scanned again for the download-retry, its tile was NOT found anywhere (Flow may have removed it, or the project may have changed). The task has been failed as 'lost-render'. The prompt was NOT quietly RESUBMITTED — if you want it made again, run it yourself from the Sequence report's "Regenerate Missing Only", so the charge happens by your decision.`,
+              message: `Lost render: Prompt #${rowTask.prompt_index + 1} — the generated tile was not found in the project, NOT resubmitted`
             });
             this.onTaskUpdate({ taskId: rowTask.id, promptIndex: rowTask.prompt_index, promptText: rowTask.prompt_text, tag: rowTask.prompt_tag || '', status: 'failed', reason });
             noteTaskSettled(rowTask.id, 'failed');
@@ -725,10 +725,10 @@ class WorkerPool {
               taskId: rowTask.id,
               promptIndex: rowTask.prompt_index,
               reason: entry.reason,
-              detail: `Prompt #${rowTask.prompt_index + 1} ki tile [${entry.accountName || 'account'}] ke project me MAUJOOD hai (video bana hua hai), lekin is run ki download-retry me bhi koi ranneeti file save nahi kar payi. Ranneetiyon ka natija: ${formatAttempts(outcome.attempts)}. Task fail NAHI kiya gaya: ye pending (check-only) me hai — agle Resume par SIRF iska download dobara hoga, prompt dobara submit NAHI hoga aur koi naya charge NAHI lagega. Chaaho to Flow ke project me jaa kar video haath se bhi download kar sakte ho.`,
-              message: `Download baaki: Prompt #${rowTask.prompt_index + 1} — tile maujood hai, agle Resume par sirf download dobara hoga`
+              detail: `Prompt #${rowTask.prompt_index + 1}'s tile EXISTS in [${entry.accountName || 'account'}]'s project (the video is generated), but in this run's download-retry too, no strategy could save the file. Strategy results: ${formatAttempts(outcome.attempts)}. The task has NOT been failed: it is in pending (check-only) — on the next Resume ONLY its download will happen again, the prompt will NOT be submitted again and NO new charge will apply. If you want, you can also download the video manually from the Flow project.`,
+              message: `Download remaining: Prompt #${rowTask.prompt_index + 1} — the tile exists; on the next Resume only the download will happen again`
             });
-            this.log(`Prompt #${rowTask.prompt_index + 1}: tile maujood hai lekin download is baar bhi nahi hua — task pending (check-only) me rakha hai; agle Resume par sirf download dobara hoga, koi naya charge nahi.`, 'warn');
+            this.log(`Prompt #${rowTask.prompt_index + 1}: the tile exists but the download did not happen this time either — the task is kept in pending (check-only); on the next Resume only the download will happen again, no new charge.`, 'warn');
           }
         }
       };
@@ -804,7 +804,7 @@ class WorkerPool {
               stage: 'download',
               taskId: task.taskId || null,
               promptIndex: typeof task.promptIndex === 'number' ? task.promptIndex : null,
-              detail: `Prompt #${(task.promptIndex || 0) + 1} ka video ban gaya aur download bhi ho gaya. File: ${result.fileName}${result.filePath ? ` · Save ki jagah: ${result.filePath}` : ''}${result.fileSizeMb ? ` · Size: ${result.fileSizeMb}` : ''}`,
+              detail: `Prompt #${(task.promptIndex || 0) + 1}'s video was generated and also downloaded. File: ${result.fileName}${result.filePath ? ` · Save location: ${result.filePath}` : ''}${result.fileSizeMb ? ` · Size: ${result.fileSizeMb}` : ''}`,
               message: `Download complete: ${result.fileName}${task.tag ? ` · Tag ${task.tag}` : ''} · Prompt #${(task.promptIndex || 0) + 1}${workerAccount ? ` · ${workerAccount.name}` : ''}`
             });
             this.onTaskUpdate({
@@ -867,8 +867,8 @@ class WorkerPool {
                 percentage: (info && info.percentage) || null
               }),
               message: state === 'generating'
-                ? `Render shuru: Prompt #${(task.promptIndex || 0) + 1} ki tile mil gayi — Flow par video ban raha hai`
-                : `Render ka intezaar: Prompt #${(task.promptIndex || 0) + 1} ki tile abhi pehchani nahi gayi — talaash jari hai`
+                ? `Render started: Prompt #${(task.promptIndex || 0) + 1}'s tile has been found — the video is generating on Flow`
+                : `Render wait: Prompt #${(task.promptIndex || 0) + 1}'s tile has not been identified yet — the search is continuing`
             });
           },
           onTaskStalled: (task, info) => {
@@ -884,8 +884,8 @@ class WorkerPool {
               stage: 'render-wait',
               taskId: task.taskId || null,
               promptIndex: typeof task.promptIndex === 'number' ? task.promptIndex : null,
-              detail: `Prompt #${(task.promptIndex || 0) + 1} ka video [${accName}] par Flow ko bheja ja chuka tha aur credits kat gaye the, lekin uski tile project me ${info && info.stallAfterSec ? `${info.stallAfterSec} second` : 'kaafi der'} ke baad bhi dikhai nahi di. Kahan ruka: render-wait stage — Flow ne tile abhi tak nahi dikhayi (aksar Flow slow hota hai, ya tile grid me neeche chhupi hoti hai). Task FAIL NAHI kiya gaya: app ab project ko baar-baar scan karke (grid scroll + tile ki pehchan) ${windowMin} minute tak intezaar karega. Tile milte hi wahi video download hoga; na mile to iske baad hi fail hoga.`,
-              message: `Render ka intezaar: Prompt #${(task.promptIndex || 0) + 1} ki tile abhi nahi mili — recovery scan jari hai (task fail NAHI hua)`
+              detail: `Prompt #${(task.promptIndex || 0) + 1}'s video had been sent to Flow on [${accName}] and credits had been deducted, but its tile did not appear in the project even after ${info && info.stallAfterSec ? `${info.stallAfterSec} seconds` : 'a long time'}. Where it stopped: render-wait stage — Flow has not shown the tile yet (Flow is often slow, or the tile is hidden lower down in the grid). The task has NOT been failed: the app will now keep scanning the project (grid scroll + tile identification) and wait up to ${windowMin} minutes. As soon as the tile is found, that same video will be downloaded; only if it is not found will it fail after that.`,
+              message: `Render wait: Prompt #${(task.promptIndex || 0) + 1}'s tile has not been found yet — recovery scan is continuing (task has NOT failed)`
             });
           },
           onRenderStall: (task, info) => {
@@ -899,11 +899,11 @@ class WorkerPool {
             const accName = workerAccount ? workerAccount.name : ((info && info.accountName) || '');
             const frozenFor = stallWatch.formatDuration((info && info.stuckForSec) || 0);
             const pctNote = info && info.lastPct
-              ? `Progress ${info.lastPct} par ruk gaya hai`
-              : 'Flow ne abhi tak koi progress % dikhaya hi nahi';
+              ? `Progress has been stuck at ${info.lastPct}`
+              : 'Flow has not shown any progress % yet';
             const causes = info && info.background
-              ? 'Mumkin wajah: (1) Flow ki taraf se hi render slow/queue me hai — aisi haalat me intezaar se hi banta hai; (2) Background mode me Chrome ki window screen se bahar hai — v2.6.0 me window minimize NAHI hoti aur throttling rokne wale flags lage hain, phir bhi agar ye baar-baar ho to ek run Visible mode (Background band karke) me try karke dekho, farq saaf ho jayega.'
-              : 'Mumkin wajah: Flow ki taraf se hi render slow/queue me hai — aisi haalat me aksar intezaar se hi banta hai. Lamba atke to Flow par bheed ya us prompt ka render atak gaya ho sakta hai.';
+              ? 'Possible reason: (1) the render is slow / in a queue from Flow\'s side — in such a state it usually gets made just by waiting; (2) in Background mode the Chrome window is off-screen — in v2.6.0 the window does NOT minimize and anti-throttling flags are set, still, if this happens again and again, try one run in Visible mode (turn Background off) and the difference will be clear.'
+              : 'Possible reason: the render is slow / in a queue from Flow\'s side — in such a state it usually gets made just by waiting. If it stays stuck for long, there may be heavy load on Flow, or that prompt\'s render may have got stuck.';
             recordActivity({
               category: 'generation', level: 'warn',
               accountId: workerAccount ? workerAccount.id : null,
@@ -911,9 +911,9 @@ class WorkerPool {
               stage: 'render-stall',
               taskId: task.taskId || null,
               promptIndex: typeof task.promptIndex === 'number' ? task.promptIndex : null,
-              reason: `Progress ${frozenFor} se aage nahi badha${info && info.lastPct ? ` (${info.lastPct} par atka)` : ''}`,
-              detail: `Prompt #${(task.promptIndex || 0) + 1} [${accName}] ki tile mil chuki hai aur video ban raha tha, lekin ${pctNote} — kul ${frozenFor} se koi badlaav nahi.${info && info.queueHint ? ` ${info.queueHint}.` : ''} ${causes} Task abhi FAIL NAHI hua: run ki kul intezaar-ghadi chal rahi hai, aur progress dobara chal pade to ye khud aage badh jayega.`,
-              message: `Render atka: Prompt #${(task.promptIndex || 0) + 1} ka progress ${frozenFor} se nahi badha${info && info.lastPct ? ` (${info.lastPct})` : ''} — task abhi fail NAHI hua`
+              reason: `Progress has not moved for ${frozenFor}${info && info.lastPct ? ` (stuck at ${info.lastPct})` : ''}`,
+              detail: `Prompt #${(task.promptIndex || 0) + 1}'s tile [${accName}] had been found and the video was generating, but ${pctNote} — no change at all for ${frozenFor}.${info && info.queueHint ? ` ${info.queueHint}.` : ''} ${causes} The task has NOT failed yet: the run's total wait clock is running, and if progress starts moving again it will move ahead by itself.`,
+              message: `Render stuck: Prompt #${(task.promptIndex || 0) + 1}'s progress has not moved for ${frozenFor}${info && info.lastPct ? ` (${info.lastPct})` : ''} — task has not failed yet`
             });
           },
           onBackendMedia: (task, info) => {
@@ -923,8 +923,8 @@ class WorkerPool {
             // 'download' ke saath aati hai; signed link khud kabhi
             // nahi likha jata, sirf host ka naam.
             const viaShabd = info && info.via === 'workflow-id'
-              ? 'workflowId ki pehchan se bandha'
-              : (info && info.via === 'currentSrc' ? 'tile ke currentSrc se pushti hua' : 'kram ke hisaab se bandha');
+              ? 'bound by workflowId identification'
+              : (info && info.via === 'currentSrc' ? 'confirmed from the tile\'s currentSrc' : 'bound by sequence order');
             recordActivity({
               category: 'generation', level: 'info',
               accountId: workerAccount ? workerAccount.id : null,
@@ -932,8 +932,8 @@ class WorkerPool {
               stage: 'download',
               taskId: task.taskId || null,
               promptIndex: typeof task.promptIndex === 'number' ? task.promptIndex : null,
-              detail: `Prompt #${(task.promptIndex || 0) + 1} ka video link Flow ke peeche ke hisse (backend/network) se mil gaya — ${viaShabd}${info && info.host ? ` · Host: ${info.host}` : ''}. Koi Download button ya menu NAHI dabaya gaya: file seedha fetch ho rahi hai. (Asli completion tabhi manegi jab file save + jaanch ho jayegi.)`,
-              message: `Backend download: Prompt #${(task.promptIndex || 0) + 1} ka link backend se mila — seedha download ho raha hai`
+              detail: `Prompt #${(task.promptIndex || 0) + 1}'s video link was found from Flow's back end (backend/network) — ${viaShabd}${info && info.host ? ` · Host: ${info.host}` : ''}. No Download button or menu was pressed: the file is being fetched directly. (It will count as truly complete only when the file is saved + verified.)`,
+              message: `Backend download: Prompt #${(task.promptIndex || 0) + 1}'s link was found from the backend — downloading directly`
             });
           },
           onAccountUpdated: (data) => {
@@ -964,9 +964,9 @@ class WorkerPool {
                 if (!workerAccount) {
                   if (activeWorkerTasks.length === 0) {
                     if (taskQueue.size() > 0 && !lastStartError) {
-                      lastStartError = 'Baache hue prompts ke liye koi account kafi credits ke saath uplabdh nahi raha.';
+                      lastStartError = 'No account with enough credits is left available for the remaining prompts.';
                     }
-                    this.log(`Worker #${workerIndex + 1}: koi khaali account kafi credits ke saath nahi mila — ye worker ruk raha hai.`, 'warn');
+                    this.log(`Worker #${workerIndex + 1}: no free account with enough credits was found — this worker is stopping.`, 'warn');
                     break;
                   }
                 } else {
@@ -995,17 +995,17 @@ class WorkerPool {
                   const launched = await engine.launchBrowserForAccount(workerAccount, downloadFolder);
                   if (!launched) {
                     attemptError = engine.lastLaunchError === 'PROFILE_BUSY'
-                      ? `[${workerAccount.name}] ki Chrome profile busy hai — ${engine.lastBusyDetail || 'wo kisi aur Chrome window me khuli hai. Wo window band karke dobara Generate dabao.'}`
-                      : `[${workerAccount.name}] ke liye Chrome khul nahi paya — ${plainError.plainOf(engine.lastLaunchError || 'unknown error')}`;
+                      ? `[${workerAccount.name}]'s Chrome profile is busy — ${engine.lastBusyDetail || 'it is open in another Chrome window. Close that window and press Generate again.'}`
+                      : `Chrome could not open for [${workerAccount.name}] — ${plainError.plainOf(engine.lastLaunchError || 'unknown error')}`;
                   } else {
                     studioStatus = await engine.openFlowStudio(settings);
                   }
                 } catch (openErr) {
-                  attemptError = `[${workerAccount.name}] ke liye Google Flow khul nahi paya — ${plainError.plainOf(openErr)}`;
+                  attemptError = `Google Flow could not open for [${workerAccount.name}] — ${plainError.plainOf(openErr)}`;
                 }
 
                 if (attemptError || studioStatus !== 'READY') {
-                  const reason = attemptError || `[${workerAccount.name}] is run ke liye kaam ka nahi hai (studio status: ${studioStatus}).`;
+                  const reason = attemptError || `[${workerAccount.name}] is not usable for this run (studio status: ${studioStatus}).`;
                   const definitive = studioStatus === 'NEED_LOGIN' || studioStatus === 'EXHAUSTED' || studioStatus === 'LOW_CREDITS';
                   const attempts = (launchAttempts.get(workerAccount.id) || 0) + 1;
                   launchAttempts.set(workerAccount.id, attempts);
@@ -1013,17 +1013,17 @@ class WorkerPool {
                   if (definitive || attempts >= this.maxLaunchAttempts) {
                     unusableAccounts.set(workerAccount.id, reason);
                     if (!lastStartError) lastStartError = reason;
-                    this.log(`Worker #${workerIndex + 1}: ${reason} Is account ko is pure run ke liye chhod rahe hain.`, 'error');
+                    this.log(`Worker #${workerIndex + 1}: ${reason} This account is being skipped for this whole run.`, 'error');
                     // v2.4.0 self-check (background mode): if Flow
                     // itself would not open while the browser is
                     // hidden, say so plainly and name the one-click
                     // alternative — never leave the owner guessing
                     // why a hidden-mode run is stuck.
                     if (this.headless && !attemptError && !definitive) {
-                      this.log(`Worker #${workerIndex + 1}: Note — Background mode ON hai aur [${workerAccount.name}] par Flow khul nahi paya (status: ${studioStatus}). Agar ye baar-baar ho, to Generate/Settings se "Browser chhupa kar chalao" band karke Visible mode me try karo.`, 'warn');
+                      this.log(`Worker #${workerIndex + 1}: Note — Background mode is ON and Flow could not open on [${workerAccount.name}] (status: ${studioStatus}). If this happens again and again, turn off the hidden-browser option in Generate/Settings and try in Visible mode.`, 'warn');
                     }
                   } else {
-                    this.log(`Worker #${workerIndex + 1}: ${reason} Thoda ruk kar ek baar aur koshish hogi (koshish ${attempts}/${this.maxLaunchAttempts})…`, 'warn');
+                    this.log(`Worker #${workerIndex + 1}: ${reason} After a short wait, one more try will happen (try ${attempts}/${this.maxLaunchAttempts})…`, 'warn');
                   }
 
                   await engine.closeBrowser().catch(() => {});
@@ -1061,7 +1061,7 @@ class WorkerPool {
                   taskQueue.enqueue(nextTask);
                   triedSkips++;
                   if (activeWorkerTasks.length === 0 && triedSkips > pool.length + 1) {
-                    this.log(`Worker #${workerIndex + 1}: Prompt #${(nextTask.prompt_index || 0) + 1} har uplabdh account par try ho chuka hai. Worker ruk raha hai.`, 'warn');
+                    this.log(`Worker #${workerIndex + 1}: Prompt #${(nextTask.prompt_index || 0) + 1} has been tried on every available account. The worker is stopping.`, 'warn');
                     return;
                   }
                   accountBlocked = true;
@@ -1070,7 +1070,7 @@ class WorkerPool {
                 const waitMs = retryMark.dueAt - Date.now();
                 if (waitMs > 0) {
                   taskQueue.requeueFront(nextTask);
-                  this.log(`Worker #${workerIndex + 1}: Prompt #${(nextTask.prompt_index || 0) + 1} ka same-account retry ${Math.ceil(waitMs / 1000)} second baad hoga — intezaar ho raha hai (koi dusra account hai hi nahi)…`, 'info');
+                  this.log(`Worker #${workerIndex + 1}: Prompt #${(nextTask.prompt_index || 0) + 1}'s same-account retry will happen after ${Math.ceil(waitMs / 1000)} seconds — waiting (there is no other account)…`, 'info');
                   const until = Date.now() + waitMs;
                   // v2.4.0 heartbeat: a silent backoff reads as a hang —
                   // report roughly every 30s how much wait is left.
@@ -1079,7 +1079,7 @@ class WorkerPool {
                     await sleep(Math.min(1000, Math.max(0, until - Date.now())));
                     if (Date.now() - lastWaitNote >= 30000 && Date.now() < until) {
                       lastWaitNote = Date.now();
-                      this.log(`Worker #${workerIndex + 1}: Prompt #${(nextTask.prompt_index || 0) + 1} ke retry ka intezaar jari hai — takreeban ${Math.ceil((until - Date.now()) / 1000)} second bache hain.`, 'info');
+                      this.log(`Worker #${workerIndex + 1}: Prompt #${(nextTask.prompt_index || 0) + 1}'s retry wait is continuing — about ${Math.ceil((until - Date.now()) / 1000)} seconds are left.`, 'info');
                     }
                   }
                   break;
@@ -1111,12 +1111,12 @@ class WorkerPool {
                 });
                 this.onTaskUpdate({ taskId: nextTask.id, promptIndex: currentIdx, promptText: nextTask.prompt_text, tag: nextTask.prompt_tag || '', status: 'generating', accountName: workerAccount.name });
 
-                this.log(`Worker #${workerIndex + 1}: Prompt #${currentIdx + 1} bheja ja raha hai…`, 'info');
+                this.log(`Worker #${workerIndex + 1}: sending Prompt #${currentIdx + 1}…`, 'info');
 
                 // Duplicate-submission gate (audit fix #6 companion): a task
                 // id may be claimed for submission exactly once.
                 if (!taskQueue.claimForSubmission(nextTask.id)) {
-                  this.log(`Worker #${workerIndex + 1}: Prompt #${currentIdx + 1} pehle hi ek baar bheja ja chuka hai — dobara NAHI bheja jayega (duplicate rok diya).`, 'warn');
+                  this.log(`Worker #${workerIndex + 1}: Prompt #${currentIdx + 1} has already been sent once — it will NOT be sent again (duplicate stopped).`, 'warn');
                   continue;
                 }
 
@@ -1139,7 +1139,7 @@ class WorkerPool {
                   try { dbService.updateTaskProgress(nextTask.id, 'pending'); } catch (e) {}
                   this.onTaskUpdate({ taskId: nextTask.id, promptIndex: currentIdx, promptText: nextTask.prompt_text, status: 'pending' });
                   noteTaskSettled(nextTask.id, 'moved');
-                  this.log(`Worker #${workerIndex + 1}: [${workerAccount.name}] Prompt #${currentIdx + 1} nahi chala sakta (${submitRes.status}). Prompt wapas queue me dal diya; is account ke ban rahe videos download hote hi dusre account par jayenge.`, 'warn');
+                  this.log(`Worker #${workerIndex + 1}: [${workerAccount.name}] cannot run Prompt #${currentIdx + 1} (${submitRes.status}). The prompt has been put back in the queue; as soon as this account's generating videos are downloaded, it will go to another account.`, 'warn');
                   accountBlocked = true;
                   break;
                 }
@@ -1154,7 +1154,7 @@ class WorkerPool {
                     taskId: nextTask.id,
                     promptIndex: currentIdx,
                     reason: submitRes.reason || 'Safety / Policy Violation',
-                    detail: `Prompt #${currentIdx + 1} ko bhejte hi Google ki safety policy ne rok diya. Ye prompt ki taraf ki galti hai — har account par yahi hoga, isliye failover karke dusre accounts ke credits barbaad NAHI kiye gaye. Prompt badal kar dobara bhejo.`,
+                    detail: `As soon as Prompt #${currentIdx + 1} was sent, Google's safety policy stopped it. This fault is from the prompt's side — the same will happen on every account, so other accounts' credits were NOT wasted by failover. Change the prompt and send it again.`,
                     message: `Task FAIL (policy): Prompt #${currentIdx + 1} — ${submitRes.reason || 'Safety / Policy Violation'}`
                   });
                   this.onTaskUpdate({ taskId: nextTask.id, promptIndex: currentIdx, promptText: nextTask.prompt_text, tag: nextTask.prompt_tag || '', status: 'failed', reason: submitRes.reason || 'Safety / Policy Violation' });
@@ -1205,7 +1205,7 @@ class WorkerPool {
                     workerAccount = null;
                   }
                 } else {
-                  this.log(`Worker #${workerIndex + 1}: Browser khula rakha ja raha hai taaki ${activeWorkerTasks.length} ban rahe video poori tarah download ho jayein.`, 'warn');
+                  this.log(`Worker #${workerIndex + 1}: the browser is being kept open so that the ${activeWorkerTasks.length} generating videos download completely.`, 'warn');
                 }
                 currentTask = null;
                 break;
@@ -1263,7 +1263,7 @@ class WorkerPool {
               // and rotate this worker to a fresh account.
               const hitUnusualActivity = windowTasks.some(t => t.status === 'Unusual Activity');
               if (hitUnusualActivity && remaining.length === 0 && workerAccount && taskQueue.size() > 0 && !this.isStopping) {
-                this.log(`Worker #${workerIndex + 1}: [${workerAccount.name}] par Google ka cooldown (unusual activity) lag gaya — account ko rest par rakh kar dusre account par ja rahe hain…`, 'warn');
+                this.log(`Worker #${workerIndex + 1}: Google's cooldown (unusual activity) hit [${workerAccount.name}] — putting the account on rest and moving to another account…`, 'warn');
                 creditPort.cooldown(workerAccount.id);
                 await engine.closeBrowser().catch(() => {});
                 this.assignedAccounts.delete(workerAccount.id);
@@ -1277,7 +1277,7 @@ class WorkerPool {
               // v2.7.0: purani line bina jaanche "saare videos download
               // ho gaye" keh deti thi — ab sirf itna kaha jata hai jo
               // sach hai (window settle ho gaya; natija upar ke log me).
-              this.log(`Worker #${workerIndex + 1}: [${workerAccount.name}] ke ban rahe videos ka intezaar khatam ho gaya hai (jo bane wo download hue, jo fail hue unki wajah upar ke log me hai). Ab is account ko chhod kar dusre account par ja rahe hain…`, 'info');
+              this.log(`Worker #${workerIndex + 1}: the wait for [${workerAccount.name}]'s generating videos is over (the ones that were made are downloaded; the ones that failed have their reasons in the log above). Now leaving this account and moving to another account…`, 'info');
               await engine.closeBrowser().catch(() => {});
               this.assignedAccounts.delete(workerAccount.id);
               workerAccount = null;
@@ -1337,7 +1337,7 @@ class WorkerPool {
             return row && row.status === 'pending' && row.needs_check;
           });
           if (stillDownloadPending.length > 0) {
-            this.log(`Note: ${stillDownloadPending.length} prompt ka video ban gaya tha lekin unka download abhi baaki hai — wo pending (check-only) me hain. Resume dabane par SIRF unka download dobara hoga, koi naya charge NAHI lagega.`, 'warn');
+            this.log(`Note: ${stillDownloadPending.length} prompts' videos had been generated but their download is still remaining — they are in pending (check-only). On pressing Resume, ONLY their download will happen again; NO new charge will apply.`, 'warn');
           }
         } catch (e) {}
       }
@@ -1371,7 +1371,7 @@ class WorkerPool {
           try { dbService.cancelRunningTasks(id); } catch (e) {}
         }
         this.onProgress({ status: 'Stopped' });
-        this.log(`Queue rok di gayi. Is run me kul ${completedCount} video bane. Jo prompts beech me chale gaye the, wo pending me hain — jo Flow ko bheje ja chuke the unhe agle Resume par pehle check kiya jayega (dobara credits nahi katenge).`, 'warn');
+        this.log(`Queue stopped. A total of ${completedCount} videos were made in this run. Prompts that went in midway are in pending — the ones that had already been sent to Flow will be checked first on the next Resume (credits will not be deducted again).`, 'warn');
       } else if (taskQueue.size() > 0) {
         // v1.1 fix (brief D): prompts that never got to run must end
         // VISIBLY failed with the concrete reason — never stranded in
@@ -1381,8 +1381,8 @@ class WorkerPool {
         // resort — with same-account retry in place it should only
         // surface when every account truly was unusable.
         const reason = lastStartError
-          || (lastFailureReason ? `Run khatam ho gaya is prompt ke process hone se pehle. Aakhri fail ki wajah: ${lastFailureReason}` : null)
-          || 'Run is prompt ke process hone se pehle hi khatam ho gaya (koi kaam ka account bacha hi nahi).';
+          || (lastFailureReason ? `The run ended before this prompt could be processed. The last failure's reason: ${lastFailureReason}` : null)
+          || 'The run ended before this prompt could even be processed (no usable account was left).';
         let leftover;
         while ((leftover = taskQueue.next()) !== null) {
           try { dbService.failTask(leftover.id, reason); } catch (e) { /* best-effort */ }
@@ -1395,11 +1395,11 @@ class WorkerPool {
             reason
           });
         }
-        this.log(`Queue pehle hi khatam ho gayi: ${reason}`, 'error');
+        this.log(`Queue already ended: ${reason}`, 'error');
         this.onProgress({ status: `Error: ${reason}` });
       } else {
         this.onProgress({ status: 'Completed' });
-        this.log(`Saara kaam pura ho gaya! Is run me kul ${completedCount} video bane.`, 'success');
+        this.log(`All work is complete! A total of ${completedCount} videos were made in this run.`, 'success');
       }
     } finally {
       if (queueResolver) queueResolver();
@@ -1422,7 +1422,7 @@ WorkerPool.buildRunStatusText = function buildRunStatusText(stats) {
   const active = Math.max(0, Number(s.active) || 0);
   const done = Math.max(0, Number(s.done) || 0);
   const failed = Math.max(0, Number(s.failed) || 0);
-  let text = `Chal raha hai — ${active} ban rahe hain · ${done} poore · kul ${total} prompts`;
+  let text = `Running — ${active} generating · ${done} complete · total ${total} prompts`;
   if (failed > 0) text += ` · ${failed} fail`;
   return text;
 };

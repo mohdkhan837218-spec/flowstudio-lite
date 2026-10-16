@@ -50,10 +50,10 @@ function buildSequenceReport(rows, { exists, namingMode = 'tag' } = {}) {
 
     if (row.status !== 'completed') {
       const reason = row.status === 'failed'
-        ? (row.error_reason || 'Task fail ho gaya tha')
+        ? (row.error_reason || 'The task had failed')
         : row.status === 'cancelled'
-          ? 'Task cancel ho gaya tha'
-          : 'Task abhi tak pura nahi hua (pending/running)';
+          ? 'The task had been cancelled'
+          : 'The task has not completed yet (pending/running)';
       missing.push({ ...base, reason });
       continue;
     }
@@ -62,7 +62,7 @@ function buildSequenceReport(rows, { exists, namingMode = 'tag' } = {}) {
     if (!filePath || !existsFn(filePath)) {
       missing.push({
         ...base,
-        reason: 'Task complete mark hua tha, lekin video file disk par nahi mili (delete/move ho gayi?) — dobara banana padega'
+        reason: 'The task was marked complete, but the video file was not found on disk (deleted/moved?) — it will have to be generated again'
       });
       continue;
     }
