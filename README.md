@@ -147,6 +147,12 @@ Developer smoke tests (no Electron needed): `npm test` runs `tests/smoke.js` —
 
 ---
 
+## What's new in v2.13.0 — the sidebar is ONE lines list, as approved
+
+- The owner circled the sidebar's lower half on a screenshot of the shipped app: below the cookies box, the OLD accounts block was still living there — its own filter tabs (All · Live · Ready · Fail), a stats line ("Total credits · Live · Today's spend · Today's videos") and the big account cards. The approved final design never had that block: the sidebar carries ONE list. **It is removed.**
+- Now EVERY account — cookie-imported or Chrome-profile — renders as **one line-strip** in the single list under the status buttons (All · Checking · Live · Fail, counts across all accounts): tick · name · credits (or the failure reason) · status chip (CHECKING… / LIVE / READY / FAIL) · a Chrome ↗ / Sign In button inside the line. A profile account whose sign-in window is open shows a **Done** button on its line until the login is confirmed; cooldown / unconfirmed / per-account messages appear as small note rows under that account's line, only when there is something to say.
+- Totals live only in the top strip (TOTAL CREDITS) — no second stats line in the sidebar. The single actions box (Sync Selected · Delete Selected · Verify All · Clear Selection + the "0 of N selected · X live ready · Y not confirmed" line) and the "Only run live accounts" box are unchanged and now serve the one list.
+
 ## What's new in v2.12.0 — real auto-update, like the big apps
 
 - **The app now lives in its own GitHub repo — `mohdkhan837218-spec/flowstudio-lite`** — and updates itself from its Releases, the way Chrome/WhatsApp Desktop do. Install the Setup **.exe once**; after that, new versions are found, downloaded in the background, and offered in Settings → Updates as **"Restart & Update"**. Nothing to download by hand ever again.
