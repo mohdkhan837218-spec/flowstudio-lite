@@ -1,0 +1,1172 @@
+/* ============================================================
+   FlowStudio Lite — Premium v2 theme (v2.0.0)
+   The owner-approved design: warm dark gradient + restrained GOLD
+   accent (styles.html style 9), with a White appearance twin
+   (style 10) switched by [data-theme="white"] on <html>.
+   Vanilla CSS only.
+   ============================================================ */
+
+:root {
+  /* Dark (Gold) — default */
+  --bg-body: radial-gradient(1100px 480px at 85% -10%, rgba(234,179,8,.14), transparent 60%), linear-gradient(155deg,#1e1b12 0%,#121210 48%,#0b0b0d 100%);
+  --surface: linear-gradient(180deg,#22211a,#1a1915);
+  --surface-solid: #1d1c16;
+  --panel: linear-gradient(180deg,#22211a,#1a1915);
+  --border: #35332a;
+  --border-soft: #2e2b21;
+  --text: #f5f2e9;
+  --text-dim: #b5b09c;
+  --text-faint: #a8a28e;
+  --accent: #eab308;
+  --accent-2: #f59e0b;
+  --accent-grad: linear-gradient(135deg,#facc15,#f59e0b);
+  --accent-text: #fde047;
+  --on-accent: #1a1405;
+  --input-bg: #171611;
+  --chip-bg: #28261c;
+  --green: #4ade80;
+  --green-bg: rgba(74,222,128,.12);
+  --red: #f87171;
+  --red-bg: rgba(248,113,113,.12);
+  --amber: #fde047;
+  --amber-bg: rgba(253,224,71,.10);
+  --blue: #7dd3fc;
+  --blue-bg: rgba(125,211,252,.10);
+  --radius: 13px;
+  --shadow: 0 8px 22px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.05);
+  --shadow-sm: 0 4px 12px rgba(0,0,0,.25);
+  --log-bg: #12110d;
+  --scrollbar: #3a372a;
+}
+
+:root[data-theme="white"] {
+  --bg-body: radial-gradient(1100px 480px at 85% -10%, rgba(234,179,8,.16), transparent 60%), linear-gradient(160deg,#ffffff 0%,#fdf9ec 55%,#f4eed6 100%);
+  --surface: #ffffff;
+  --surface-solid: #ffffff;
+  --panel: #ffffff;
+  --border: #eae3c2;
+  --border-soft: #eae2c4;
+  --text: #1d1b12;
+  --text-dim: #5b5747;
+  --text-faint: #8a846c;
+  --accent: #eab308;
+  --accent-2: #d97706;
+  --accent-grad: linear-gradient(135deg,#facc15,#f59e0b);
+  --accent-text: #92600a;
+  --on-accent: #ffffff;
+  --input-bg: #fffdf2;
+  --chip-bg: #faf5df;
+  --green: #15803d;
+  --green-bg: rgba(21,128,61,.10);
+  --red: #b91c1c;
+  --red-bg: rgba(185,28,28,.08);
+  --amber: #b45309;
+  --amber-bg: rgba(180,83,9,.10);
+  --blue: #0369a1;
+  --blue-bg: rgba(3,105,161,.08);
+  --shadow: 0 8px 20px rgba(146,120,20,.07);
+  --shadow-sm: 0 4px 10px rgba(146,120,20,.06);
+  --log-bg: #fffdf2;
+  --scrollbar: #ddd5b4;
+}
+
+* { box-sizing: border-box; }
+html { scrollbar-color: var(--scrollbar) transparent; }
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+  background: var(--bg-body) fixed;
+  color: var(--text);
+  font-size: 13.5px;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.app { display: flex; height: 100vh; }
+
+/* ---------- Sidebar ---------- */
+.sidebar {
+  width: 304px; flex-shrink: 0;
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 14px 12px;
+  background: rgba(128,128,128,.04);
+  border-right: 1px solid var(--border-soft);
+}
+.brand { display: flex; align-items: center; gap: 10px; padding: 2px 4px 8px; }
+.brand .logo {
+  width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--accent-grad); color: #1a1405; font-size: 17px;
+  box-shadow: 0 4px 16px rgba(234,179,8,.4);
+}
+.brand h1 { font-size: 15.5px; margin: 0; font-weight: 750; }
+.brand h1 span { color: var(--accent-text); }
+.brand small { display: block; font-size: 10.5px; color: var(--text-faint); font-weight: 600; margin-top: 1px; }
+.brand .version {
+  margin-left: auto; font-size: 10px; font-weight: 800; color: var(--on-accent);
+  background: var(--accent-grad); padding: 2px 7px; border-radius: 10px;
+}
+.nav { display: flex; flex-direction: column; gap: 4px; }
+.nav-btn {
+  display: flex; align-items: center; gap: 10px; text-align: left;
+  padding: 10px 12px; font-size: 13.5px; font-weight: 550;
+  color: var(--text-dim); background: transparent; border: none; border-radius: 9px; cursor: pointer;
+}
+.nav-btn:hover { color: var(--text); background: rgba(128,128,128,.07); }
+.nav-btn.active {
+  background: linear-gradient(90deg, rgba(234,179,8,.18), rgba(234,179,8,.05));
+  color: var(--accent-text); font-weight: 700;
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+:root[data-theme="white"] .nav-btn.active { background: linear-gradient(90deg,#fdf0c2,#fdf8e3); }
+.new-badge {
+  margin-left: auto; font-size: 9px; font-weight: 800; letter-spacing: .4px;
+  background: var(--accent); color: #1a1405; border-radius: 10px; padding: 2px 6px;
+  box-shadow: 0 2px 8px rgba(234,179,8,.45);
+}
+.sidebar .sp { flex: 1; }
+.theme-quick {
+  padding: 8px 12px; font-size: 12px; font-weight: 650;
+  background: var(--surface-solid); color: var(--text-dim);
+  border: 1px solid var(--border); border-radius: 9px; cursor: pointer; text-align: left;
+}
+.theme-quick:hover { color: var(--accent-text); }
+.total-box {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 14px; box-shadow: var(--shadow-sm);
+}
+.total-box small { font-size: 10.5px; font-weight: 700; letter-spacing: .8px; color: var(--text-faint); }
+.total-box .big { font-size: 24px; font-weight: 800; color: var(--accent-text); margin: 3px 0 2px; }
+.total-box .sub { font-size: 11px; color: var(--text-faint); }
+
+/* ---------- Main / views ---------- */
+/* v2.2.0 fit-to-screen: the app NEVER scrolls as a whole. The main
+   column and every view are flex columns bounded by the window; only
+   regions marked .scroll-region (lists, tables, logs) scroll inside
+   themselves, so toolbars/stats/headers are always on screen. */
+.main { flex: 1; min-width: 0; overflow: hidden; padding: 14px 18px 16px; display: flex; flex-direction: column; }
+.view { display: none; }
+.view.active { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+/* v2.6.0: scroll regions sirf upar-neeche scroll karte hain — andar
+   ki har row wrap/ellipsis-safe hai, to dayein-bayein wala scrollbar
+   (jo Generate par folder-row ke neeche dikhta tha) khatam. */
+.scroll-region { overflow-y: auto; overflow-x: hidden; min-height: 0; }
+.scroll-region::-webkit-scrollbar { width: 8px; }
+.scroll-region::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 6px; }
+
+.toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; flex-shrink: 0; }
+.stats-row, .bulk-bar, .resume-banner, .view-head { flex-shrink: 0; }
+.hint { color: var(--text-faint); font-size: 12px; }
+
+button {
+  font: inherit; font-size: 12.5px; font-weight: 650;
+  padding: 8px 14px; border-radius: 9px; cursor: pointer;
+  background: var(--surface-solid); color: var(--text);
+  border: 1px solid var(--border);
+  transition: transform .06s ease, box-shadow .15s ease, border-color .15s ease;
+}
+button:hover:not(:disabled) { border-color: var(--accent); box-shadow: var(--shadow-sm); }
+button:active:not(:disabled) { transform: translateY(1px); }
+button:disabled { opacity: .45; cursor: default; }
+button.primary {
+  background: var(--accent-grad); color: var(--on-accent); border: none; font-weight: 800;
+  box-shadow: 0 5px 18px rgba(245,158,11,.35);
+}
+button.primary:hover:not(:disabled) { box-shadow: 0 7px 22px rgba(245,158,11,.45); }
+button.big { font-size: 14px; padding: 11px 22px; }
+button.danger { color: var(--red); border-color: var(--red-bg); }
+button.danger:hover:not(:disabled) { border-color: var(--red); }
+.mini-btn { font-size: 11px; font-weight: 650; padding: 5px 10px; border-radius: 8px; background: var(--chip-bg); color: var(--accent-text); border: 1px solid var(--border); }
+
+/* ---------- Panels / cards ---------- */
+.panel {
+  background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 13px 15px; box-shadow: var(--shadow); margin-bottom: 12px;
+}
+.panel h3 { margin: 0 0 10px; font-size: 14px; font-weight: 750; }
+.empty {
+  border: 1.5px dashed var(--border); border-radius: var(--radius);
+  padding: 22px; text-align: center; color: var(--text-faint); font-size: 12.5px;
+  background: rgba(128,128,128,.03);
+}
+
+/* v2.6.0: stats hamesha EK hi kataar me — grid with equal columns.
+   The old flex-wrap dropped the 5th card ("AAJ KE VIDEOS") alone
+   onto a second row at the owner's window width. Labels truncate
+   with an ellipsis instead of wrapping the card. */
+.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); gap: 10px; margin-bottom: 12px; }
+.stat {
+  min-width: 0;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 9px 12px; box-shadow: var(--shadow);
+}
+.stat small { display: block; font-size: 9.5px; font-weight: 700; letter-spacing: .6px; color: var(--text-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stat .v { font-size: 19px; font-weight: 800; margin-top: 2px; white-space: nowrap; }
+.stat .v.gold { color: var(--accent-text); }
+
+/* ---------- Accounts ---------- */
+.accounts-layout { display: flex; gap: 16px; align-items: stretch; flex: 1; min-height: 0; }
+.accounts-main { flex: 1; min-width: 0; min-height: 0; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 13px; margin-bottom: 16px; }
+#chrome-profiles-list.cards { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+.card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 15px 16px; box-shadow: var(--shadow);
+  transition: transform .12s ease, box-shadow .15s ease;
+}
+.card:hover { transform: translateY(-2px); }
+.card-head { display: flex; align-items: center; gap: 11px; }
+.avatar {
+  width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 14px; color: #fff;
+  background: linear-gradient(135deg,#78716c,#44403c);
+  box-shadow: 0 0 0 2px rgba(234,179,8,.25);
+}
+.card h3 { margin: 0; font-size: 13.5px; font-weight: 700; }
+.card .email { font-size: 11.5px; color: var(--text-faint); word-break: break-all; }
+.credit-line { display: flex; align-items: baseline; gap: 8px; margin-top: 10px; }
+.credit-num { font-size: 22px; font-weight: 800; color: var(--accent-text); }
+.credit-label { font-size: 11px; color: var(--text-faint); }
+.credit-bar { height: 8px; border-radius: 6px; background: rgba(128,128,128,.18); margin: 8px 0 4px; overflow: hidden; }
+.credit-bar i {
+  display: block; height: 100%; border-radius: 6px;
+  background: linear-gradient(90deg,#eab308,#fbbf24);
+  box-shadow: 0 0 8px rgba(234,179,8,.45);
+}
+.card .meta { font-size: 11.5px; color: var(--text-dim); margin-top: 6px; }
+.low-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 10.5px; font-weight: 800; color: var(--amber);
+  background: var(--amber-bg); border: 1px solid var(--amber);
+  padding: 2px 8px; border-radius: 20px; margin-left: 8px;
+}
+.card-error, .card-note {
+  font-size: 12px; border-radius: 9px; padding: 8px 10px; margin-top: 10px; line-height: 1.45;
+}
+.card-error { color: var(--red); background: var(--red-bg); }
+.card-note { color: var(--amber); background: var(--amber-bg); }
+.card .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.card .btn-row button { padding: 6px 11px; font-size: 12px; }
+
+/* v2.4.0: compact account ROWS (ZDola style) — one line per account */
+.account-rows { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.account-row {
+  display: flex; align-items: flex-start; gap: 11px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 10px 13px; box-shadow: var(--shadow-sm);
+}
+.acc-ico {
+  width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; margin-top: 1px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 800; border: 1.5px solid var(--border);
+  background: var(--chip-bg); color: var(--text-dim);
+}
+.acc-ico.ok { color: var(--green); border-color: var(--green); background: var(--green-bg); }
+.acc-ico.warn { color: var(--amber); border-color: var(--amber); background: var(--amber-bg); }
+.acc-ico.bad { color: var(--red); border-color: var(--red); background: var(--red-bg); }
+.acc-main { flex: 1; min-width: 0; }
+.acc-line1 { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+/* v2.6.0: lambe account naam/email kabhi letter-by-letter na tootein
+   (1024px par screenshot me pakda gaya) — ek line, aakhir me … */
+.acc-name { font-weight: 700; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.acc-email { font-size: 11.5px; color: var(--text-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.acc-line2 { font-size: 12px; color: var(--text-dim); margin-top: 3px; display: flex; align-items: center; flex-wrap: wrap; }
+.acc-checked { color: var(--text-faint); }
+.account-row .meta { font-size: 11.5px; color: var(--text-dim); margin-top: 6px; }
+.account-row .cookie-line { margin-top: 7px; }
+.account-row .card-note, .account-row .card-error { margin-top: 7px; }
+.acc-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 0; }
+.acc-actions button { padding: 5px 9px; font-size: 11.5px; white-space: nowrap; }
+
+/* v2.4.0: live elapsed clock on generating task rows */
+.task-elapsed { color: var(--accent-text); font-variant-numeric: tabular-nums; font-weight: 600; }
+
+/* chips */
+.chip {
+  margin-left: auto; display: inline-flex; align-items: center; gap: 6px;
+  font-size: 10.5px; font-weight: 700; padding: 4px 9px; border-radius: 20px; white-space: nowrap;
+  background: var(--chip-bg); color: var(--text-dim); border: 1px solid var(--border);
+}
+.chip i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.chip.ready, .chip.done { color: var(--green); }
+.chip.exhausted, .chip.failed { color: var(--red); }
+.chip.lowcredits, .chip.cooldown { color: var(--amber); }
+.chip.unconfirmed { color: var(--blue); }
+.chip.needlogin { color: var(--red); }
+.chip.generating, .chip.pending { color: var(--blue); }
+.chip.unknown { color: var(--text-faint); }
+
+/* cookie chip — its own row on the card (v2.0.0) */
+.cookie-line { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.cookie-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px;
+  background: var(--chip-bg); color: var(--text-dim); border: 1px solid var(--border);
+  max-width: 100%;
+}
+.cookie-chip.checking { color: var(--blue); border-color: var(--blue); }
+.cookie-chip.checking::before {
+  content: ''; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--blue); animation: pulse 1s ease-in-out infinite;
+}
+.cookie-chip.live { color: var(--green); border-color: var(--green); }
+.cookie-chip.ready { color: var(--amber); border-color: var(--amber); }
+.cookie-chip.fail { color: var(--red); border-color: var(--red); }
+@keyframes pulse { 0%,100% { opacity: .35; } 50% { opacity: 1; } }
+
+/* ---------- Activity ---------- */
+.activity-mini { width: 272px; flex-shrink: 0; display: flex; flex-direction: column; margin-bottom: 0; }
+.activity-mini h3 { display: flex; align-items: center; gap: 8px; }
+.activity-list { display: flex; flex-direction: column; }
+/* v2.6.0: mini rows tighter — the old 8px padding + 1.45 line-height
+   made three entries sprawl with odd gaps in the owner's panel. */
+.activity-list .ev {
+  display: flex; gap: 8px; padding: 6px 2px;
+  border-bottom: 1px solid var(--border-soft); font-size: 12px; line-height: 1.4;
+}
+.activity-list .ev:last-child { border-bottom: none; }
+.ev .dot { width: 9px; height: 9px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; background: var(--text-faint); box-shadow: 0 0 0 3px var(--surface-solid); }
+.ev.level-success .dot { background: var(--green); }
+.ev.level-warn .dot { background: var(--amber); }
+.ev.level-error .dot { background: var(--red); }
+.ev.level-info .dot { background: var(--blue); }
+.ev .msg { flex: 1; min-width: 0; }
+.ev time { color: var(--text-faint); font-size: 10.5px; white-space: nowrap; margin-top: 2px; }
+.activity-list.full .ev { padding: 10px 4px; font-size: 13px; }
+.activity-mini .activity-list { flex: 1; min-height: 0; overflow-y: auto; margin-bottom: 8px; align-content: flex-start; }
+.activity-mini .ev .msg { word-break: break-word; }
+
+/* ---------- Segmented control ---------- */
+.seg {
+  display: inline-flex; gap: 4px; padding: 4px; border-radius: 11px;
+  background: var(--chip-bg); border: 1px solid var(--border); margin-bottom: 10px; flex-wrap: wrap;
+}
+.seg-btn {
+  padding: 6px 13px; font-size: 12px; font-weight: 650; border: none; border-radius: 8px;
+  background: transparent; color: var(--text-dim); box-shadow: none;
+}
+.seg-btn:hover:not(:disabled) { box-shadow: none; color: var(--text); }
+.seg-btn.active { background: var(--accent-grad); color: var(--on-accent); font-weight: 800; }
+
+/* ---------- Generate ---------- */
+.resume-banner {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--amber-bg); border: 1px solid var(--amber); color: var(--text);
+  border-radius: var(--radius); padding: 12px 16px; margin-bottom: 16px; font-size: 13px;
+}
+/* v2.3.0: tag chips, detect line, prompt preview, sequence banner */
+.tag-chip {
+  display: inline-flex; align-items: center; flex: none;
+  font-size: 11px; font-weight: 800; letter-spacing: .02em;
+  color: var(--accent-text); background: var(--chip-bg);
+  border: 1px solid var(--accent); border-radius: 999px; padding: 2px 9px;
+}
+.detect-row { display: flex; align-items: center; gap: 10px; margin: 2px 0 8px; }
+.detect-line { font-size: 12.5px; font-weight: 700; color: var(--accent-text); }
+.prompt-preview {
+  max-height: 168px; overflow-y: auto; margin-bottom: 10px;
+  border: 1px solid var(--border-soft); border-radius: 11px;
+  background: var(--surface-solid); padding: 8px 10px;
+}
+.pv-row { display: flex; align-items: center; gap: 9px; padding: 4px 2px; font-size: 12px; }
+.pv-row + .pv-row { border-top: 1px dashed var(--border-soft); }
+.pv-text { color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sequence-banner {
+  flex-shrink: 0; border-radius: var(--radius); padding: 12px 16px;
+  margin-bottom: 16px; font-size: 13px; border: 1px solid var(--border);
+  background: var(--surface-solid); max-height: 240px; overflow-y: auto;
+}
+.sequence-banner.ok { border-color: var(--green); background: var(--green-bg); }
+.sequence-banner.warn { border-color: var(--red); background: var(--red-bg); }
+.seq-head { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.seq-title { font-weight: 800; font-size: 13.5px; }
+.seq-line { display: flex; align-items: center; gap: 9px; padding: 5px 0; font-size: 12.5px; flex-wrap: wrap; }
+.seq-line + .seq-line { border-top: 1px dashed var(--border-soft); }
+.seq-text { color: var(--text); }
+.seq-note { color: var(--text-faint); font-size: 12px; }
+.seq-actions { margin-top: 10px; }
+.h-name-line { display: flex; align-items: center; gap: 8px; }
+.generate-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr); gap: 14px; flex: 1; min-height: 0; align-items: stretch; }
+.generate-grid .panel { margin-bottom: 0; min-height: 0; }
+/* v2.2.0: the Generate form scrolls inside its own area; the action
+   buttons (Generate/Pause/Stop) are pinned at the panel bottom so
+   they are ALWAYS on screen — no scrolling to reach them. */
+.gen-left { display: flex; flex-direction: column; }
+.gen-form { flex: 1; min-height: 0; padding-right: 4px; }
+.gen-left .actions { flex: none; padding-top: 10px; border-top: 1px solid var(--border-soft); }
+.gen-right { display: flex; flex-direction: column; }
+/* v2.6.0: Progress aur Log ki unchai flex se bantti hai (pehle Log
+   190px fixed tha aur chhoti khidki me Progress ko kuchal deta tha,
+   badi me neeche khali jagah chhod deta tha). */
+.gen-right .task-list { flex: 1.15 1 0; margin-bottom: 10px; min-height: 90px; }
+.gen-right .log-box { flex: 1 1 0; height: auto; min-height: 110px; }
+/* v2.2.0: the Generate grid keeps its two columns down to ~1000px —
+   stacking it into rows made the left panel too short for its own
+   form (the Generate button fell below the fold at 1100x750).
+   v2.6.0 note: the Accounts layout still STACKS at <=1150px — a
+   side-by-side box at 1024 left the account rows ~440px and long
+   account names (the owner's own "flow.google.com_cookies (3)")
+   crushed letter-by-letter (screenshot-verified). Stacked, the box
+   gets the full width and the mini panel sits below it inside the
+   same scroll region — the layout the owner already used happily. */
+@media (max-width: 1150px) {
+  /* v2.10.0: sidebar ab accounts ka vertical box hai — use 198px
+     tak sikudna box ko bekaar kar dega, isliye yahan 272px floor. */
+  .sidebar { width: 272px; padding: 12px 10px; }
+  .main { padding: 12px 12px 12px; }
+}
+/* v2.7.0: Generate grid ka stacking ab 900px se neeche hai — window
+   ka min size hi 1000x640 hai, isliye asal me grid hamesha do-column
+   rehta hai. (Pehle 1000px par stack ho jata tha: left panel aadhi
+   unchai ka ho kar form ko zyada scroll karwata tha — owner ki
+   shikayat ke bilkul ulta.) */
+@media (max-width: 900px) {
+  .generate-grid { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); }
+}
+textarea, input[type="text"], select {
+  font: inherit; font-size: 13px; color: var(--text);
+  background: var(--input-bg); border: 1px solid var(--border); border-radius: 9px;
+  padding: 9px 11px; outline: none;
+}
+textarea:focus, input[type="text"]:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(234,179,8,.18); }
+textarea { width: 100%; resize: vertical; line-height: 1.5; margin-bottom: 10px; }
+.settings-row { display: flex; gap: 12px; flex-wrap: wrap; margin: 9px 0; }
+.settings-row label { display: flex; flex-direction: column; gap: 5px; font-size: 11.5px; font-weight: 650; color: var(--text-dim); }
+.settings-row label.grow { flex: 1; }
+.folder-row { display: flex; gap: 8px; }
+.folder-row input { flex: 1; min-width: 0; }
+/* v2.7.0 (FIX 4): Generate ke Model/Duration/Aspect/File-naam ek hi
+   compact grid me (2x2) — pehle do alag bikhri hui settings-row thi.
+   Folder ki kataar iske neeche patli si ek line me rehti hai. */
+.gen-settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; margin: 10px 0 2px; }
+.gen-settings-grid label { display: flex; flex-direction: column; gap: 4px; font-size: 11.5px; font-weight: 650; color: var(--text-dim); min-width: 0; }
+.gen-settings-grid select { width: 100%; min-width: 0; }
+.folder-line { margin: 6px 0 2px; }
+.folder-line label { display: flex; flex-direction: column; gap: 4px; font-size: 11.5px; font-weight: 650; color: var(--text-dim); }
+.folder-line .folder-row button { flex: none; }
+/* v2.7.0 (FIX 4): accounts ginati wali pinned line — Generate ke
+   footer me, actions ke theek upar, hamesha dikhai deti hai. */
+.run-accounts-line {
+  flex: none; padding: 8px 2px 0; font-size: 12.5px; font-weight: 700;
+  color: var(--accent-text); line-height: 1.35;
+}
+.actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+.run-status { font-size: 12.5px; font-weight: 650; color: var(--text-dim); }
+.run-status.error { color: var(--red); }
+
+/* task rows */
+.task-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.task-row {
+  background: var(--surface-solid); border: 1px solid var(--border-soft); border-radius: 11px;
+  padding: 10px 13px; border-left: 4px solid var(--border);
+}
+.task-row.generating { border-left-color: var(--blue); }
+.task-row.done { border-left-color: var(--green); }
+.task-row.failed { border-left-color: var(--red); }
+.task-row.pending { border-left-color: var(--amber); }
+.task-head { display: flex; align-items: center; gap: 9px; }
+.task-idx { font-weight: 800; color: var(--accent-text); font-size: 12px; }
+.task-prompt { font-size: 12.5px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.task-detail { font-size: 11.5px; color: var(--text-faint); margin-top: 5px; line-height: 1.45; }
+.task-detail.error { color: var(--red); }
+.task-row .btn-row { display: flex; gap: 8px; margin-top: 8px; }
+.task-row .btn-row button { padding: 4px 10px; font-size: 11.5px; }
+
+/* log */
+.log-box {
+  background: var(--log-bg); border: 1px solid var(--border-soft); border-radius: 11px;
+  height: 190px; overflow-y: auto; padding: 10px 13px;
+  font-family: Consolas, 'Cascadia Mono', monospace; font-size: 11.5px; line-height: 1.55;
+}
+.log-box::-webkit-scrollbar, .activity-list::-webkit-scrollbar { width: 8px; }
+.log-box::-webkit-scrollbar-thumb, .activity-list::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 6px; }
+.log-line { white-space: pre-wrap; word-break: break-word; }
+.log-info { color: var(--text-dim); }
+.log-warn { color: var(--amber); }
+.log-error { color: var(--red); }
+.log-success { color: var(--green); }
+
+/* ---------- Settings ---------- */
+.toggle-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  padding: 10px 2px; border-bottom: 1px solid var(--border-soft); cursor: pointer;
+}
+.toggle-row:last-child { border-bottom: none; }
+.toggle-row small { display: block; color: var(--text-faint); font-size: 11.5px; margin-top: 2px; font-weight: 500; }
+.toggle {
+  appearance: none; width: 42px; height: 23px; border-radius: 20px; flex-shrink: 0;
+  background: rgba(128,128,128,.3); position: relative; cursor: pointer; outline: none;
+  transition: background .15s ease; border: 1px solid var(--border);
+}
+.toggle::after {
+  content: ''; position: absolute; top: 2px; left: 2px; width: 17px; height: 17px;
+  border-radius: 50%; background: #fff; transition: left .15s ease; box-shadow: 0 1px 4px rgba(0,0,0,.3);
+}
+.toggle:checked { background: var(--accent-grad); }
+.toggle:checked::after { left: 21px; }
+.about-box { font-size: 12.5px; line-height: 1.7; color: var(--text-dim); }
+.about-box b { color: var(--text); }
+
+/* ---------- In-app modal + toast (v2.1.0) ---------- */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(5,4,2,.62);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.modal-overlay[hidden] { display: none; }
+.modal-card {
+  width: 100%; max-width: 430px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 20px 22px;
+}
+.modal-card h3 { margin: 0 0 8px; font-size: 15px; font-weight: 750; }
+.modal-message { margin: 0 0 6px; font-size: 13px; line-height: 1.55; color: var(--text-dim); white-space: pre-line; word-break: break-word; }
+.modal-input-wrap { display: block; margin: 12px 0 4px; }
+.modal-input-wrap[hidden] { display: none; }
+.modal-input-wrap span { display: block; font-size: 11.5px; font-weight: 650; color: var(--text-dim); margin-bottom: 5px; }
+.modal-input-wrap input { width: 100%; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 16px; }
+.modal-actions button.danger-ok { background: var(--red-bg); color: var(--red); border-color: var(--red); box-shadow: none; }
+.toast-wrap {
+  position: fixed; right: 18px; bottom: 18px; z-index: 1100;
+  display: flex; flex-direction: column; gap: 8px; max-width: 360px;
+}
+.toast {
+  background: var(--surface-solid); color: var(--text);
+  border: 1px solid var(--border); border-left: 4px solid var(--accent);
+  border-radius: 10px; padding: 10px 13px; font-size: 12.5px; line-height: 1.45;
+  box-shadow: var(--shadow); word-break: break-word;
+  animation: toast-in .18s ease;
+}
+.toast.error { border-left-color: var(--red); }
+.toast.success { border-left-color: var(--green); }
+@keyframes toast-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* ---------- Activity entries: expandable detail + copy (v2.1.0) ---------- */
+.activity-list.full .ev { cursor: pointer; align-items: flex-start; }
+.activity-list.full .ev:hover { background: rgba(128,128,128,.05); }
+.ev .ev-main { flex: 1; min-width: 0; }
+.ev .ev-detail {
+  display: none; margin-top: 7px; padding: 9px 11px;
+  background: rgba(128,128,128,.06); border: 1px solid var(--border-soft);
+  border-radius: 9px; font-size: 12px; line-height: 1.55; color: var(--text-dim);
+  white-space: pre-line; word-break: break-word; cursor: text;
+}
+.ev.expanded .ev-detail { display: block; }
+.ev .ev-copy { flex-shrink: 0; margin-top: 1px; }
+
+/* ---------- v2.2.0: history table, simple activity, cookie modal ---------- */
+/* v2.5.0: the Generate workers box is GONE (control lives in
+   Settings); the Accounts list now sits in a ZDola-style panel box. */
+.accounts-box { display: flex; flex-direction: column; gap: 9px; }
+.accounts-box .seg { margin-bottom: 2px; }
+.accounts-box .account-rows { margin-bottom: 0; }
+/* v2.6.0: ZDola-style sections — bada add ilaaka upar, do-column
+   action grid neeche, phir status line + toggle, phir rotation. */
+.accounts-add-bar { display: flex; gap: 10px; }
+.accounts-add-bar button { flex: 1; padding: 11px 14px; font-size: 13.5px; font-weight: 800; border-radius: 10px; }
+.accounts-add-hint { margin: -3px 0 0; }
+.accounts-action-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  border-top: 1px solid var(--border); padding-top: 10px;
+}
+.accounts-action-grid button { padding: 8px 11px; font-size: 12.5px; }
+.accounts-action-grid button:disabled { opacity: .45; cursor: not-allowed; }
+.rotation-box {
+  border-top: 1px solid var(--border); padding-top: 9px;
+}
+.rotation-box h4 { margin: 0 0 5px; font-size: 12.5px; font-weight: 750; }
+.rotation-box p { margin: 0 0 3px; font-size: 11.5px; line-height: 1.45; color: var(--text-dim); }
+.rotation-box .mini-btn { margin-top: 5px; }
+.accounts-box-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
+  border-top: 1px solid var(--border); padding-top: 8px;
+}
+.toggle-row.slim { padding: 0; }
+.toggle-row.slim span { font-size: 12.5px; }
+.account-row.selected { border-color: var(--accent, #eab308); box-shadow: 0 0 0 1px var(--accent, #eab308) inset; }
+.acc-tick { width: 16px; height: 16px; margin-top: 5px; flex-shrink: 0; accent-color: var(--accent, #eab308); cursor: pointer; }
+.log-actions { float: right; display: inline-flex; gap: 6px; }
+.log-line .lg-icon { font-weight: 800; margin-right: 2px; }
+.log-line .lg-time { color: var(--text-faint); margin-right: 6px; }
+.log-success .lg-icon { color: var(--green); }
+.log-warn .lg-icon { color: var(--amber); }
+.log-error .lg-icon { color: var(--red); }
+.log-info .lg-icon { color: var(--blue); }
+
+.view-head { margin-bottom: 12px; }
+.view-head h2 { margin: 0 0 4px; font-size: 17px; font-weight: 800; }
+.import-scroll .panel:last-child, .settings-scroll .panel:last-child { margin-bottom: 2px; }
+
+.history-search { min-width: 230px; flex: 0 1 280px; }
+.history-table-wrap {
+  flex: 1; border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface-solid); overflow-y: auto;
+}
+.history-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.history-table thead th {
+  position: sticky; top: 0; z-index: 1; text-align: left;
+  background: var(--surface-solid); color: var(--text-faint);
+  font-size: 10.5px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase;
+  padding: 10px 12px; border-bottom: 1px solid var(--border);
+}
+.history-table tbody td { padding: 9px 12px; border-bottom: 1px solid var(--border-soft); vertical-align: middle; }
+.history-table tbody tr:hover { background: rgba(128,128,128,.05); }
+.history-table tbody tr.selected { background: rgba(234,179,8,.08); }
+.history-table .col-check { width: 34px; }
+.history-table .h-name { font-weight: 700; word-break: break-word; }
+.history-table .h-prompt { color: var(--text-faint); font-size: 11.5px; margin-top: 2px; word-break: break-word; }
+.history-table .h-reason { color: var(--red); font-size: 11.5px; margin-top: 2px; word-break: break-word; }
+.history-table .h-size, .history-table .h-date { white-space: nowrap; color: var(--text-dim); }
+.history-table .h-actions { white-space: nowrap; }
+.history-table .h-actions button { padding: 4px 9px; font-size: 11.5px; margin-right: 5px; }
+.status-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 10.5px; font-weight: 800; padding: 3px 9px; border-radius: 20px; white-space: nowrap;
+  background: var(--chip-bg); border: 1px solid var(--border);
+}
+.status-chip.done { color: var(--green); border-color: var(--green); }
+.status-chip.failed { color: var(--red); border-color: var(--red); }
+.bulk-bar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin-top: 12px; padding: 11px 14px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+.sel-count { font-weight: 800; font-size: 13px; }
+
+.activity-list.full.simple-mode .ev { cursor: default; padding: 6px 4px; font-family: Consolas, 'Cascadia Mono', monospace; font-size: 12px; }
+.activity-list.full.simple-mode .ev:hover { background: transparent; }
+.ev .ev-icon { font-weight: 800; flex-shrink: 0; margin-top: 1px; width: 15px; text-align: center; }
+.ev.level-success .ev-icon { color: var(--green); }
+.ev.level-warn .ev-icon { color: var(--amber); }
+.ev.level-error .ev-icon { color: var(--red); }
+.ev.level-info .ev-icon { color: var(--blue); }
+
+.modal-card.wide { max-width: 560px; }
+.modal-error {
+  color: var(--red); background: var(--red-bg); border: 1px solid var(--red);
+  border-radius: 9px; padding: 9px 11px; font-size: 12.5px; line-height: 1.5; margin-top: 10px;
+}
+.cookie-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0 4px; }
+.cookie-opt {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
+  padding: 14px; font-size: 14px; font-weight: 800; text-align: left; border-radius: 11px;
+}
+.cookie-opt small { font-size: 11.5px; font-weight: 550; color: var(--text-dim); line-height: 1.45; }
+.cookie-opt.active { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(234,179,8,.18); }
+#cookie-paste-text { width: 100%; resize: vertical; margin-top: 12px; font-family: Consolas, monospace; font-size: 11.5px; }
+
+/* ---------- Preview page ---------- */
+.preview-body {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  height: 100vh; padding: 18px; gap: 12px; overflow: hidden;
+}
+.preview-body h2 { font-size: 14px; margin: 0; color: var(--text-dim); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.preview-body video {
+  max-width: 100%; max-height: calc(100vh - 90px); border-radius: 12px;
+  border: 1px solid var(--border); box-shadow: var(--shadow); background: #000;
+}
+
+/* ---------- v2.10.0: ZDola-style VERTICAL BOX (sidebar) ----------
+   Accounts ke saare sections ab sidebar ke ek lambe vertical box
+   me hain (owner ki ZDola image wala layout): nav chhoti pills ki
+   grid hai, box flex column hai, aur sirf accounts LIST andar
+   scroll hoti hai — page kabhi scroll nahi hota (fit law qaim). */
+.nav.nav-pills {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px;
+}
+.nav.nav-pills .nav-btn {
+  justify-content: center; text-align: center; gap: 5px;
+  padding: 6px 4px; font-size: 12px; border-radius: 8px;
+  white-space: nowrap; overflow: hidden;
+}
+.nav.nav-pills .nav-btn.active { box-shadow: inset 0 -2px 0 var(--accent); }
+.nav.nav-pills .new-badge { margin-left: 2px; font-size: 8px; padding: 1px 5px; }
+
+.side-box {
+  flex: 1; min-height: 0; margin-bottom: 0;
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 11px 11px 10px;
+}
+.side-box-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+}
+.side-box-head h3 { margin: 0; font-size: 13.5px; font-weight: 750; }
+.link-btn {
+  background: none; border: none; padding: 2px 4px; cursor: pointer;
+  color: var(--accent-text); font-size: 12px; font-weight: 650;
+  text-decoration: underline; text-underline-offset: 2px;
+}
+.link-btn:hover { color: var(--text); }
+.side-stats-line {
+  font-size: 11px; color: var(--text-faint); line-height: 1.5;
+  border-top: 1px dashed var(--border); border-bottom: 1px dashed var(--border);
+  padding: 5px 1px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.side-list {
+  flex: 1; min-height: 24px; overflow-y: auto; overflow-x: hidden;
+  display: flex; flex-direction: column; gap: 7px; margin-bottom: 0;
+  padding-right: 2px;
+}
+.side-list::-webkit-scrollbar { width: 7px; }
+.side-list::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 6px; }
+
+.sidebar .accounts-add-bar { gap: 7px; }
+.sidebar .accounts-add-bar button { padding: 9px 8px; font-size: 12.5px; }
+.sidebar .accounts-add-hint { font-size: 11px; }
+.sidebar .seg { margin-bottom: 0; width: 100%; }
+.sidebar .seg .seg-btn { flex: 1; padding: 5px 2px; font-size: 11.5px; }
+.sidebar .account-row {
+  flex-wrap: wrap; gap: 8px; padding: 9px 10px;
+}
+.sidebar .acc-main { flex: 1 1 180px; }
+.sidebar .acc-actions {
+  flex: 1 1 100%; display: flex; gap: 5px; flex-wrap: wrap; margin-top: 2px;
+}
+.sidebar .acc-actions button { flex: 1; padding: 5px 4px; font-size: 11px; }
+.sidebar .accounts-action-grid { gap: 6px; padding-top: 8px; }
+.sidebar .accounts-action-grid button { padding: 7px 6px; font-size: 11.5px; }
+.sidebar .accounts-box-foot { flex-direction: column; align-items: stretch; gap: 6px; }
+.sidebar .rotation-box p { font-size: 10.5px; line-height: 1.35; }
+.sidebar .theme-quick { padding: 6px 10px; font-size: 11.5px; text-align: center; }
+
+/* v2.10.0 fit compression: sidebar ke fixed sections itne sikude
+   hain ki 1000x650 par bhi poora box + TOTAL CREDITS dikhe — sirf
+   accounts list andar scroll hoti hai. Bina iske box ke neeche ke
+   buttons window ke bahar kat jate the (screenshot QA me pakda). */
+.sidebar .accounts-add-bar button { white-space: nowrap; padding: 8px 4px; font-size: 12px; }
+.sidebar .seg .seg-btn { white-space: nowrap; font-size: 11px; padding: 5px 1px; }
+.sidebar .empty { padding: 8px; font-size: 11.5px; }
+.sidebar .accounts-box-foot .toggle-row.slim small { display: none; }
+.sidebar .total-box {
+  display: flex; align-items: baseline; gap: 9px; padding: 8px 12px;
+}
+.sidebar .total-box .big { font-size: 19px; margin: 0; }
+.sidebar .total-box .sub { margin-left: auto; text-align: right; }
+.nav.nav-pills .nav-btn { font-size: 11.5px; }
+.sidebar #accounts-status-line {
+  display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+@media (max-height: 820px) {
+  /* Darmiyani unchai par rotation ke samjhane wale paragraph fold —
+     section, uska title aur Settings button barkarar rehte hain.
+     Lambi window (owner ki asal screen) par teeno lines ZDola ki
+     tarah khuli dikhti hain. Empty-state (0 accounts) ke saath bhi
+     box fit rahe, isliye yahan kuch aur sikudna: rotation button
+     ek line, empty box aur patla. */
+  .sidebar .rotation-box p { display: none; }
+  .sidebar .rotation-box .mini-btn {
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    display: block; width: 100%; font-size: 11px;
+  }
+  .sidebar .empty { padding: 6px; font-size: 11px; }
+}
+@media (max-height: 720px) {
+  /* Sabse chhoti unchai: hint aur brand ki dusri line bhi fold,
+     khaali list ka minimum bhi gaya — box har haal me fit. */
+  .sidebar .accounts-add-hint { display: none; }
+  .sidebar .brand small { display: none; }
+  .sidebar .side-list { min-height: 0; }
+  .sidebar .total-box { padding: 6px 12px; }
+}
+
+/* ============================================================
+   v2.11.0 — FINAL DESIGN LAYER (owner-approved, 2026-10-15/16)
+   Warm Premium colours + a light gold gradient, NO glow.
+   Structure: top strip · accounts box with tabs inside · cookies
+   box · Generate 62/38 + fit-to-window · ZDola Activity panel ·
+   Settings (Appearance/Tags/Updates/CREATED BY) · responsive
+   zones + mobile tab bar. Everything below overrides the v2.10
+   layout where they conflict.
+   ============================================================ */
+:root {
+  --bg-body: linear-gradient(160deg,#1c1911,#12110d 55%,#0b0a08);
+  --surface: linear-gradient(180deg,#221f16,#191712);
+  --surface-solid: #1d1a13;
+  --panel: linear-gradient(180deg,#221f16,#191712);
+  --border: rgba(230,200,130,.16);
+  --border-soft: rgba(230,200,130,.12);
+  --accent: #cf9c1e;
+  --accent-2: #b5851a;
+  --accent-grad: linear-gradient(180deg,#e2ba55,#bd8f1c);
+  --accent-text: #e9c766;
+  --gold: #e9c766;
+  --shadow: 0 8px 22px rgba(0,0,0,.32);
+  --shadow-sm: 0 1px 4px rgba(0,0,0,.35);
+}
+:root[data-theme="white"] {
+  --bg-body: linear-gradient(160deg,#ffffff 0%,#fdf9ec 55%,#f4eed6 100%);
+  --accent: #b5851a;
+  --accent-2: #96690f;
+  --accent-grad: linear-gradient(180deg,#d9ae3f,#b5851a);
+  --accent-text: #92600a;
+}
+
+/* ---------- App frame ---------- */
+.app { flex-direction: column; }
+.body-row { display: flex; flex: 1; min-height: 0; }
+.sidebar {
+  width: 302px; border-right: none; background: rgba(210,170,60,.03);
+  padding: 12px 10px; gap: 0;
+}
+.sidebar .accounts-box { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.main { padding: 12px 14px; }
+
+/* ---------- Top strip ---------- */
+.top-strip {
+  display: flex; align-items: center; gap: 14px;
+  margin: 12px 14px 0; padding: 10px 14px;
+  background: var(--panel); border: 1px solid var(--border-soft);
+  border-radius: var(--radius); box-shadow: var(--shadow-sm);
+}
+.bb-brand {
+  display: flex; align-items: center; gap: 9px;
+  border: 1px solid var(--border-soft); border-radius: 11px;
+  padding: 7px 11px; background: rgba(255,255,255,.02);
+}
+.bb-logo {
+  width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--accent-grad); color: #1a1405; font-size: 15px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.35);
+}
+.bb-name { font-size: 15.5px; font-weight: 750; line-height: 1.1; }
+.bb-name span { color: var(--accent-text); }
+.bb-tag { font-size: 10.5px; color: var(--text-faint); font-weight: 600; }
+.bb-ver {
+  font-size: 10px; font-weight: 800; color: var(--accent-text);
+  border: 1px solid var(--border); padding: 2px 7px; border-radius: 10px;
+}
+.st-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.st-by { font-size: 13.5px; color: var(--text-dim); white-space: nowrap; }
+.st-by b { color: var(--text); }
+.st-icons { display: inline-flex; gap: 7px; }
+.st-icon {
+  width: 32px; height: 32px; border-radius: 9px; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,.04); border: 1px solid var(--border-soft);
+  cursor: pointer;
+}
+.st-icon:hover { border-color: var(--accent); }
+:root[data-theme="white"] .st-icon svg [stroke] { stroke: #6b6248; }
+.st-sep { width: 1px; height: 26px; background: var(--border-soft); }
+.st-credits { display: flex; align-items: center; gap: 9px; white-space: nowrap; }
+.st-credits .lab { font-size: 10.5px; font-weight: 800; letter-spacing: 1.1px; color: var(--text-faint); }
+.st-credits .big { font-size: 30px; font-weight: 850; color: var(--accent-text); line-height: 1; }
+.st-sync {
+  font-size: 12.5px; font-weight: 700; color: var(--accent-text);
+  background: transparent; border: 1px solid var(--border);
+  border-radius: 9px; padding: 7px 12px; cursor: pointer;
+}
+.st-sync:hover { border-color: var(--accent); }
+
+/* ---------- Accounts box ---------- */
+.side-tabs { flex-direction: row; gap: 6px; margin-bottom: 10px; }
+.side-tabs .nav-btn {
+  flex: 1; justify-content: center; text-align: center;
+  border: 1px solid var(--border-soft); border-radius: 10px; padding: 9px 6px;
+}
+.side-tabs .nav-btn.active { box-shadow: none; background: rgba(207,156,30,.16); color: var(--accent-text); }
+.side-box-head { display: flex; justify-content: flex-end; margin: 2px 0 6px; }
+.ck-status-row { display: flex; gap: 5px; margin: 10px 0 7px; }
+.ck-status-row button {
+  flex: 1; font-size: 11px; font-weight: 650; padding: 7px 2px;
+  border-radius: 8px; border: 1px solid var(--border-soft);
+  background: rgba(255,255,255,.02); color: var(--text-dim); cursor: pointer;
+  white-space: nowrap;
+}
+.ck-status-row button.active { background: var(--accent-grad); color: #1a1405; border-color: transparent; font-weight: 800; }
+.ck-linebox {
+  border: 1px solid var(--border-soft); border-radius: 11px;
+  background: rgba(255,255,255,.015);
+  padding: 7px; display: flex; flex-direction: column; gap: 6px;
+  overflow-y: auto; height: 186px; flex: none; min-height: 84px;
+}
+.ck-line {
+  display: flex; align-items: center; gap: 8px;
+  border: 1px solid var(--border-soft); border-radius: 9px;
+  background: rgba(255,255,255,.025); padding: 7px 9px;
+}
+.ck-line.selected { border-color: var(--accent); }
+.ck-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.ck-name { font-size: 12.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ck-meta { font-size: 11px; color: var(--text-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ck-chip { font-size: 9px; font-weight: 800; letter-spacing: .4px; padding: 3px 7px; border-radius: 20px; white-space: nowrap; }
+.ck-chip.checking { background: var(--amber-bg); color: var(--amber); }
+.ck-chip.live, .ck-chip.ready { background: var(--green-bg); color: var(--green); }
+.ck-chip.fail { background: var(--red-bg); color: var(--red); }
+.ck-open {
+  font-size: 11px; font-weight: 700; color: var(--accent-text);
+  background: transparent; border: 1px solid var(--border);
+  border-radius: 8px; padding: 5px 8px; cursor: pointer; white-space: nowrap;
+}
+.ck-empty { padding: 10px 6px; }
+#account-filter-seg { margin-top: 10px; }
+.side-subbox {
+  border: 1px solid var(--border-soft); border-radius: 11px;
+  background: rgba(255,255,255,.02); padding: 9px; margin-top: 10px;
+  display: flex; flex-direction: column; gap: 7px;
+}
+.accounts-action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.accounts-action-grid button { height: 38px; font-size: 11.5px; border-radius: 9px; }
+.side-list { flex: 1; min-height: 60px; }
+
+/* ---------- Generate page ---------- */
+.generate-grid { grid-template-columns: minmax(0, 1.63fr) minmax(0, 1fr); }
+.prompts-title-row { display: flex; align-items: center; gap: 10px; }
+.prompts-title-row h3 { margin: 0; }
+.tag-pick { margin-left: auto; display: inline-flex; align-items: center; gap: 7px; }
+.tag-pick label { font-size: 11px; font-weight: 800; letter-spacing: .6px; color: var(--text-faint); }
+.tag-pick select { min-width: 130px; }
+.seg-mode { display: flex; width: 100%; box-sizing: border-box; align-items: center; }
+.pcount-top {
+  margin-left: auto; font-size: 11.5px; font-weight: 800; color: var(--accent-text);
+  border: 1px solid var(--border); border-radius: 20px; padding: 4px 11px; white-space: nowrap;
+}
+.settings-box {
+  border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.025);
+  border-radius: 13px; padding: 12px; margin-top: 14px;
+}
+:root[data-theme="white"] .settings-box { border-color: var(--border-soft); background: rgba(0,0,0,.015); }
+.settings-box h4 { margin: 0 0 10px; font-size: 12px; letter-spacing: .8px; color: var(--text-dim); }
+.gen-settings-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.showmode-box { margin-top: 16px; }
+.run-accounts-line { font-size: 11.5px; font-weight: 700; color: var(--accent-text); padding: 8px 2px 0; }
+.actions { display: flex; align-items: center; gap: 9px; }
+.actions-spacer { flex: 1; }
+.progress-foot { font-size: 11.5px; color: var(--text-faint); font-weight: 650; padding-top: 8px; }
+
+/* ---------- Activity panel (ZDola Design 2) ---------- */
+.activity-panel { margin-top: 14px; display: flex; flex-direction: column; min-height: 0; }
+.zd-mrow, .zd-trow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.zd-mrow { margin-bottom: 6px; }
+.zd-title { font-size: 16px; font-weight: 800; }
+.zd-status { font-size: 12.5px; color: var(--text-dim); }
+.zd-right { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; }
+.zd-chip { font-size: 11px; font-weight: 800; background: var(--green-bg); color: var(--green); border-radius: 20px; padding: 4px 11px; }
+#activity-stats-line { font-size: 12px; color: var(--text-dim); font-weight: 600; }
+.seg-mini .seg-btn { padding: 5px 11px; font-size: 11.5px; }
+.zd-stream {
+  margin-top: 10px; border: 1px solid var(--border-soft); border-radius: 11px;
+  background: var(--log-bg); padding: 9px 11px; overflow-y: auto;
+  min-height: 74px; max-height: 190px;
+  display: flex; flex-direction: column; gap: 5px;
+}
+.zd-stream .ev { display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; }
+.zd-stream .ev .dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; background: var(--text-faint); }
+.zd-stream .ev.level-success .dot { background: var(--green); }
+.zd-stream .ev.level-error .dot { background: var(--red); }
+.zd-stream .ev.level-warn .dot { background: var(--amber); }
+.zd-stream .ev-main { flex: 1; min-width: 0; }
+.zd-stream .ev-sub { font-size: 11px; color: var(--text-faint); margin-top: 1px; }
+.zd-stream .ev time { font-size: 11px; color: var(--text-faint); white-space: nowrap; }
+.mini-btn.gold { color: var(--accent-text); border-color: var(--border); font-weight: 700; }
+
+/* ---------- History ---------- */
+.back-chip { margin-bottom: 10px; font-size: 12px; padding: 6px 12px; align-self: flex-start; }
+
+/* ---------- Settings extras ---------- */
+.ctags-manage { margin-top: 14px; border-top: 1px dashed var(--border-soft); padding-top: 12px; }
+.ctags-manage h4 { margin: 0 0 9px; font-size: 12px; letter-spacing: .8px; color: var(--text-dim); }
+.ctags-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 9px; }
+.ctag-chip {
+  font-size: 12px; font-weight: 700; padding: 6px 11px; border-radius: 20px;
+  border: 1px solid var(--border); background: rgba(255,255,255,.03); color: var(--text);
+  cursor: pointer;
+}
+.ctag-chip:hover { border-color: var(--red); color: var(--red); }
+.ctags-addrow { display: flex; gap: 8px; }
+.ctags-addrow input { flex: 1; }
+.upd-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.upd-ver { font-size: 19px; font-weight: 850; }
+.upd-cur { color: var(--text-dim); font-size: 12.5px; }
+.upd-status { font-size: 12.5px; color: var(--green); margin: 9px 0; }
+.upd-status a { color: var(--accent-text); }
+.links-box .links-display { display: none; }
+.links-fields { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 6px; }
+.links-fields label { display: flex; flex-direction: column; gap: 5px; font-size: 12px; font-weight: 650; color: var(--text-dim); }
+.links-mk { font-size: 15px; }
+
+/* ---------- Fit-to-window tiers ---------- */
+@media (max-height: 1000px) {
+  .top-strip { margin-top: 8px; padding: 8px 12px; }
+  .main { padding: 10px 12px; }
+  .zd-stream { max-height: 130px; }
+  .ck-linebox { height: 150px; }
+}
+@media (max-height: 840px) {
+  body { font-size: 13px; }
+  .top-strip { margin-top: 6px; padding: 6px 10px; }
+  .bb-logo { width: 29px; height: 29px; }
+  .st-credits .big { font-size: 25px; }
+  .zd-stream { max-height: 96px; min-height: 56px; }
+  .ck-linebox { height: 118px; }
+  .accounts-action-grid button { height: 33px; }
+  .activity-panel { margin-top: 10px; }
+  .settings-box { margin-top: 10px; padding: 10px; }
+}
+
+/* ---------- Responsive zones ---------- */
+@media (min-width: 1700px) { body { zoom: 1.13; } }
+@media (min-width: 2200px) { body { zoom: 1.3; } }
+@media (min-width: 3000px) { body { zoom: 1.48; } }
+@media (max-width: 1149px) {
+  .sidebar { width: 248px; }
+  .gen-settings-grid { grid-template-columns: repeat(2, 1fr); }
+  .ck-line { flex-wrap: wrap; }
+  .ck-open { margin-left: auto; }
+  .sidebar { overflow-x: hidden; }
+}
+@media (max-width: 860px) {
+  body { zoom: .92; }
+  .sidebar { flex: 0 0 238px; width: 238px; }
+  .main { flex: 1; min-width: 0; }
+  .generate-grid { grid-template-columns: 1fr; }
+  .gen-settings-grid { grid-template-columns: repeat(2, 1fr); }
+  .prompts-title-row, .zd-mrow, .zd-trow { flex-wrap: wrap; row-gap: 6px; }
+  .links-fields { grid-template-columns: 1fr; }
+}
+
+/* ---------- Mobile (<=699px): tab bar + one page at a time ---------- */
+.mobile-tabbar { display: none; }
+@media (max-width: 699px) {
+  body { zoom: 1; }
+  .app { height: 100dvh; }
+  .body-row { flex-direction: column; overflow: hidden; }
+  .main { flex: 1; min-height: 0; padding: 10px; }
+  .mobile-tabbar {
+    display: flex; flex-shrink: 0; background: #14120c;
+    border-top: 1px solid var(--border-soft); padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+    gap: 6px; z-index: 40;
+  }
+  :root[data-theme="white"] .mobile-tabbar { background: #fffdf4; }
+  .mobile-tabbar button {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
+    font-size: 10.5px; font-weight: 700; color: var(--text-faint);
+    background: transparent; border: 0; border-radius: 10px; padding: 7px 2px; cursor: pointer;
+  }
+  .mobile-tabbar button .mt-ic { font-size: 17px; }
+  .mobile-tabbar button.active { background: rgba(207,156,30,.18); color: var(--accent-text); }
+  /* Strip: ONE line — brand box + credits + Sync (variant 11) */
+  .top-strip { flex-wrap: nowrap; margin: 8px 8px 0; padding: 8px 10px; gap: 8px; }
+  .bb-brand { flex: 0 1 auto; min-width: 0; padding: 6px 8px; gap: 6px; }
+  .bb-logo { width: 28px; height: 28px; font-size: 12px; }
+  .bb-name { font-size: 13.5px; white-space: nowrap; }
+  .bb-tag { display: block; font-size: 8.5px; }
+  .bb-ver { display: inline-flex; font-size: 9px; padding: 1px 6px; }
+  .st-right { flex: 0 0 auto; margin-left: auto; }
+  .st-by, .st-icons, .st-sep { display: none; }
+  .st-credits { gap: 7px; }
+  .st-credits .lab { font-size: 9px; }
+  .st-credits .big { font-size: 26px; }
+  .st-sync { background: transparent; border: 1px solid rgba(207,156,30,.55); color: #e9c766; padding: 7px 11px; font-size: 12px; }
+  /* Links display lives in the Settings CREATED BY box here */
+  .links-box .links-display { display: flex; align-items: center; margin-bottom: 10px; }
+  .links-box .links-display .st-icons { display: inline-flex; margin-left: auto; }
+  /* One page at a time, switched by the tab bar */
+  body[data-mtab="generate"] .sidebar,
+  body[data-mtab="progress"] .sidebar,
+  body[data-mtab="settings"] .sidebar { display: none; }
+  body[data-mtab="accounts"] .main { display: none; }
+  body[data-mtab="accounts"] .sidebar { display: block; flex: 1; width: auto; overflow-y: auto; }
+  body[data-mtab="generate"] .gen-right,
+  body[data-mtab="generate"] .activity-panel { display: none; }
+  body[data-mtab="progress"] .gen-left { display: none; }
+  body[data-mtab="progress"] .generate-grid { display: block; }
+  .generate-grid { display: block; }
+  .gen-left { margin-bottom: 0; }
+  .ck-linebox { height: 232px; }
+}
+
+/* v2.11.0 fix-ups from the live screenshot pass */
+.nav-btn[hidden] { display: none !important; }
+.side-subbox .accounts-action-grid button { height: 38px; white-space: nowrap; font-size: 11px; padding: 4px 6px; }
+#side-stats-line, .sidebar #accounts-status-line { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.45; }
+
+/* v2.11.0 compact-fit strengthening (1366x768 must show the WHOLE
+   Generate form on one screen — the owner's verified size) */
+@media (max-height: 840px) {
+  .gen-form { gap: 0; }
+  .gen-form textarea { min-height: 72px; }
+  .settings-box { padding: 9px 10px; margin-top: 9px; }
+  .settings-box h4 { margin-bottom: 7px; }
+  .gen-settings-grid select, .settings-box select, .folder-line input { padding-top: 5px; padding-bottom: 5px; }
+  .toolbar { margin-top: 8px; }
+  .detect-row { margin-top: 6px; }
+  .showmode-box { margin-top: 9px; }
+  .ck-linebox { height: 104px; }
+  .side-subbox { padding: 7px; margin-top: 7px; gap: 5px; }
+  .accounts-action-grid button { height: 32px; }
+  .side-tabs { margin-bottom: 7px; }
+  .side-list { min-height: 40px; }
+  .actions { padding-top: 6px; }
+}
+
+/* v2.11.0 compact-fit — sample-matched textarea/box heights */
+@media (max-height: 1000px) {
+  .gen-form textarea { min-height: 84px; }
+}
+@media (max-height: 840px) {
+  .gen-form textarea { min-height: 46px; }
+  .gen-settings-grid { gap: 8px; }
+  .gen-settings-grid label, .settings-box label { font-size: 11px; }
+}
+
+/* rows attribute sets the natural height — compact tiers set it directly */
+@media (max-height: 1000px) {
+  .gen-form textarea { height: 96px; }
+}
+@media (max-height: 840px) {
+  .gen-form textarea { height: 48px; }
+}
+
+/* v2.11.0: the accounts list NEVER crushes to zero — it keeps a
+   floor, and on short windows the sidebar scrolls as one column
+   instead of squeezing the list away. */
+.sidebar .accounts-box #accounts-list { min-height: 108px; }
+@media (max-height: 840px) {
+  .ck-linebox { height: 88px; }
+  .side-subbox { padding: 6px; }
+  .side-tabs .nav-btn { padding: 7px 4px; }
+  #side-stats-line { font-size: 11px; }
+  .sidebar #accounts-status-line { font-size: 11.5px; line-height: 1.35; }
+}
+@media (max-height: 740px) {
+  /* Very short windows: the whole accounts box scrolls as one
+     column; the list keeps a fixed, always-visible height. */
+  .sidebar .accounts-box { overflow-y: auto; overflow-x: hidden; }
+  .sidebar .accounts-box #accounts-list { flex: none; height: 132px; min-height: 132px; }
+}
+
+/* v2.11.0: last squeeze so 1366x768 shows the whole sidebar too */
+@media (max-height: 840px) {
+  .sidebar .accounts-box #accounts-list { min-height: 96px; }
+  #account-filter-seg { margin-top: 6px; }
+  .ck-status-row { margin: 7px 0 5px; }
+  .accounts-add-bar { margin-bottom: 2px; }
+}
+
+/* Residual short-window overflow scrolls inside the accounts box
+   instead of clipping at the window edge. */
+@media (max-height: 840px) {
+  .sidebar .accounts-box { overflow-y: auto; overflow-x: hidden; }
+}
+
+/* Cookie line breathing room: narrower chip/button so the name fits */
+.ck-chip { font-size: 8.5px; padding: 3px 6px; }
+.ck-open { font-size: 10.5px; padding: 5px 7px; }
+.ck-name { font-size: 12px; }
+
+/* Cookie line fit: exact widths measured — name gets its full room */
+.ck-line { gap: 6px; padding: 7px 8px; }
+.ck-chip { letter-spacing: 0; padding: 3px 5px; }
+.ck-name { font-size: 11.5px; }
+.ck-meta { font-size: 10.5px; }
+.ck-line { gap: 5px; }
+.ck-open { font-size: 10px; padding: 5px 6px; }
+.ck-name { font-size: 11px; }
