@@ -2112,7 +2112,7 @@ async function renderAbout() {
     const box = document.getElementById('about-box');
     box.innerHTML = '';
     const lines = [
-      ['Version', 'FlowStudio Lite v2.16.0'],
+      ['Version', 'FlowStudio Lite v2.17.0'],
       ['Accounts', String(currentAccounts.length)],
       ['Total videos saved', stats ? String(stats.total) : '—'],
       ['Design', 'Warm Premium (Dark) + White appearance — change it above']
@@ -2588,7 +2588,7 @@ if (btnCustomTagAdd) btnCustomTagAdd.addEventListener('click', async () => {
 });
 
 // ---------- Updates box ----------
-const APP_VERSION = '2.16.0';
+const APP_VERSION = '2.17.0';
 function versionNewer(a, b) {
   const pa = String(a || '').replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0);
   const pb = String(b || '').replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0);

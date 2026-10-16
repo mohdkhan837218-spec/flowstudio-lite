@@ -1301,3 +1301,6 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; margin-bottom: 10px;
   .gen-form .toolbar button { padding: 4px 9px; font-size: 12px; }
   .gen-form > .detect-row { margin: 1px 0 2px; }
 }
+
+/* v2.17 — the strip logo is the app icon image now */
+.bb-logo { object-fit: cover; background: none; }
