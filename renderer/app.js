@@ -115,7 +115,7 @@ document.addEventListener('keydown', (e) => {
 
 /** Info dialog the user dismisses with OK. */
 async function showInfoModal(title, message) {
-  await showModal({ title, message, okText: 'Theek hai', cancelText: null });
+  await showModal({ title, message, okText: 'OK', cancelText: null });
 }
 
 /** Yes/no question. Resolves true only on the OK button. */
@@ -182,7 +182,7 @@ function formatActivityEntryForCopy(entry) {
   if (entry.category) lines.push(`Category: ${entry.category}`);
   if (entry.level) lines.push(`Level: ${entry.level}`);
   if (entry.detail) lines.push(`Detail: ${entry.detail}`);
-  if (entry.reason) lines.push(`Wajah (reason): ${entry.reason}`);
+  if (entry.reason) lines.push(`Reason: ${entry.reason}`);
   if (entry.taskId) lines.push(`Task ID: ${entry.taskId}`);
   return lines.join('\n');
 }
@@ -389,9 +389,9 @@ function cookieChipFor(acc) {
         }
         if (res && res.success === false && !(res && res.check)) {
           cookieStates.delete(acc.id);
-          setAccountMessage(acc.id, res.error || 'Cookie re-check fail ho gaya.', true);
+          setAccountMessage(acc.id, res.error || 'Cookie re-check failed.', true);
         } else if (res && res.check && res.check.state === 'fail') {
-          setAccountMessage(acc.id, `Cookie check fail — ${res.check.reason}. Profile import ya Sign In hamesha kaam karta hai.`, true);
+          setAccountMessage(acc.id, `Cookie check failed — ${res.check.reason}.`, true);
         } else if (res) {
           setAccountMessage(acc.id, null, false);
         }
@@ -447,7 +447,7 @@ document.getElementById('btn-accounts-sync-selected').addEventListener('click', 
   const ids = [...selectedAccounts];
   if (ids.length === 0) return;
   btn.disabled = true;
-  btn.textContent = 'Sync ho raha hai…';
+  btn.textContent = 'Syncing…';
   let fresh = null;
   for (const id of ids) {
     try {
@@ -460,7 +460,7 @@ document.getElementById('btn-accounts-sync-selected').addEventListener('click', 
   btn.textContent = '✔ Sync Selected';
   updateAccountsBoxChrome();
   refreshDashboard();
-  showToast(`${ids.length} account(s) sync ho gaye.`, 'success');
+  showToast(`${ids.length} account(s) synced.`, 'success');
 });
 
 document.getElementById('btn-accounts-delete-selected').addEventListener('click', async (e) => {
@@ -471,9 +471,9 @@ document.getElementById('btn-accounts-delete-selected').addEventListener('click'
     .map(id => { const a = currentAccounts.find(x => x.id === id); return a ? (a.googleName || a.name) : id; })
     .join(', ');
   const yes = await showConfirmModal(
-    'Chune hue accounts hatayein?',
-    `${ids.length} account hat jayenge: ${names}\n\nUnke saved login profiles aur saved cookies bhi delete ho jayenge. Ye wapas nahi hoga.`,
-    { okText: 'Haan, hata do', danger: true }
+    'Remove the selected accounts?',
+    `${ids.length} account(s) will be removed: ${names}\n\nTheir saved login profiles and saved cookies will also be deleted. This cannot be undone.`,
+    { okText: 'Yes, remove them', danger: true }
   );
   if (!yes) return;
   btn.disabled = true;
@@ -489,7 +489,7 @@ document.getElementById('btn-accounts-delete-selected').addEventListener('click'
   else renderAccounts(currentAccounts);
   btn.disabled = false;
   refreshDashboard();
-  showToast(`${ids.length} account(s) hata diye gaye.`, 'success');
+  showToast(`${ids.length} account(s) removed.`, 'success');
 });
 
 document.getElementById('btn-accounts-clear-selection').addEventListener('click', () => {
@@ -514,8 +514,8 @@ if (selectAllBtn) selectAllBtn.addEventListener('click', () => {
 document.getElementById('accounts-live-only').addEventListener('change', async (e) => {
   try { await window.api.setSetting('live_only_accounts', e.target.checked ? '1' : '0'); } catch (err) {}
   showToast(e.target.checked
-    ? 'Ab generation sirf Live / Ready accounts use karega.'
-    : 'Ab generation saare eligible accounts use karega (pehle jaisa).', 'info');
+    ? 'Generation will now use only Live / Ready accounts.'
+    : 'Generation will now use all eligible accounts (as before).', 'info');
 });
 
 function updateSidebarTotals() {
@@ -677,7 +677,7 @@ function applyCookieImportResult(res) {
   if (res && res.accounts) renderAccounts(res.accounts);
   noteCookieResult(res);
   if (res && res.account) {
-    setAccountMessage(res.account.id, res.success ? (res.message || 'Cookie login confirmed.') : (res.error || 'Cookie check fail ho gaya.'), !res.success);
+    setAccountMessage(res.account.id, res.success ? (res.message || 'Cookie login confirmed.') : (res.error || 'Cookie check failed.'), !res.success);
     renderAccounts(currentAccounts);
   }
   refreshDashboard();
@@ -687,7 +687,7 @@ document.getElementById('cookie-paste-add').addEventListener('click', async (e) 
   const btn = e.currentTarget;
   const text = cookiePasteText.value || '';
   if (!text.trim()) {
-    cookiePasteError.textContent = 'Pehle cookies ka text paste karo — khaali textarea se account nahi banega.';
+    cookiePasteError.textContent = 'Paste the cookies text first — an account cannot be created from an empty box.';
     cookiePasteError.hidden = false;
     return;
   }
@@ -701,11 +701,11 @@ document.getElementById('cookie-paste-add').addEventListener('click', async (e) 
       closeCookieModal();
       cookiePasteText.value = '';
       applyCookieImportResult(res);
-      showToast(res.success ? 'Cookie account jud gaya — LIVE ✔' : `Cookie check: ${res.error || 'fail'}`, res.success ? 'success' : 'error');
+      showToast(res.success ? 'Cookie account added — LIVE ✔' : `Cookie check: ${res.error || 'failed'}`, res.success ? 'success' : 'error');
     } else if (res) {
       // Parse-level failure: NO account was created — error stays in
       // the modal so the paste can be fixed and retried.
-      cookiePasteError.textContent = res.error || 'Cookies samajh nahi aaye. Netscape cookies.txt ya JSON format me paste karo.';
+      cookiePasteError.textContent = res.error || 'The cookies could not be understood. Paste in Netscape cookies.txt or JSON format.';
       cookiePasteError.hidden = false;
       if (res.accounts) renderAccounts(res.accounts);
     }
@@ -729,9 +729,9 @@ async function runCookieFileImport(label, btn) {
       if (res.account) setAccountMessage(res.account.id, res.message || 'Cookie login confirmed.', false);
     } else if (res && res.account) {
       noteCookieResult(res);
-      setAccountMessage(res.account.id, res.error || 'Cookie check fail ho gaya.', true);
+      setAccountMessage(res.account.id, res.error || 'Cookie check failed.', true);
     } else if (res) {
-      await showInfoModal('Cookie import nahi ho paya', res.error || 'Cookie import failed.');
+      await showInfoModal('Cookie import failed', res.error || 'Cookie import failed.');
     }
   } catch (err) {
     await showInfoModal('Cookie import fail', err.message);
@@ -762,12 +762,12 @@ async function runCookieBulkImport(btn) {
       for (const r of res.results) {
         if (r.accountId) {
           if (r.check) cookieStates.set(r.accountId, { state: r.check.state, reason: r.check.reason || '' });
-          setAccountMessage(r.accountId, r.success ? (r.message || 'Cookie login confirmed.') : (r.error || 'Cookie check fail ho gaya.'), !r.success);
+          setAccountMessage(r.accountId, r.success ? (r.message || 'Cookie login confirmed.') : (r.error || 'Cookie check failed.'), !r.success);
         }
       }
       renderAccounts(currentAccounts);
       const lines = res.results.map(r => `${r.success ? '✔' : '✘'} ${r.file}: ${r.success ? (r.message || 'logged in') : (r.error || 'failed')}`);
-      await showInfoModal('Cookie import pura hua', `${res.importedCount} of ${res.totalFiles} file(s) logged in:\n\n${lines.join('\n')}`);
+      await showInfoModal('Cookie import complete', `${res.importedCount} of ${res.totalFiles} file(s) logged in:\n\n${lines.join('\n')}`);
     }
   } catch (err) {
     await showInfoModal('Bulk cookie import fail', err.message);
@@ -809,11 +809,11 @@ async function loadChromeProfiles() {
         const res = await window.api.importChromeProfile(p.dirName);
         if (res && res.accounts) renderAccounts(res.accounts);
         if (res && res.success) {
-          await showInfoModal('Profile import ho gaya', res.cookiesLocked
-            ? 'Import ho gaya, lekin cookies locked thi (Chrome us profile ko istemal kar raha hai). Us profile ka Chrome band karo, dobara import karo, phir account card par Sync dabao.'
-            : 'Profile import ho gaya. Naye account card par Sync dabakar uske live credits dekho.');
+          await showInfoModal('Profile imported', res.cookiesLocked
+            ? 'Imported, but the cookies were locked (Chrome is using that profile). Close that profile\'s Chrome, import again, then press Sync on the account card.'
+            : 'Profile imported. Press Sync on the new account card to see its live credits.');
         } else {
-          await showInfoModal('Import nahi ho paya', (res && res.error) || 'Import failed.');
+          await showInfoModal('Import failed', (res && res.error) || 'Import failed.');
         }
       } catch (err) {
         await showInfoModal('Import fail', err.message);
@@ -837,9 +837,9 @@ document.getElementById('btn-import-all').addEventListener('click', async (e) =>
     const res = await window.api.importAllChromeProfiles();
     if (res && res.accounts) renderAccounts(res.accounts);
     if (res && res.success) {
-      await showInfoModal('Saare profiles import ho gaye', `${res.importedCount} of ${res.totalFound} Chrome profiles import ho gaye. Har card par Sync dabakar live credits dekho.`);
+      await showInfoModal('All profiles imported', `${res.importedCount} of ${res.totalFound} Chrome profiles were imported. Press Sync on each card to see the live credits.`);
     } else {
-      await showInfoModal('Import nahi ho paya', (res && res.error) || 'Import failed.');
+      await showInfoModal('Import failed', (res && res.error) || 'Import failed.');
     }
   } catch (err) {
     await showInfoModal('Import fail', err.message);
@@ -959,13 +959,13 @@ function updatePromptCount() {
 
 document.getElementById('btn-prompt-preview').addEventListener('click', () => {
   promptPreviewOpen = !promptPreviewOpen;
-  document.getElementById('btn-prompt-preview').textContent = promptPreviewOpen ? 'Preview chhupao' : 'Preview dekho';
+  document.getElementById('btn-prompt-preview').textContent = promptPreviewOpen ? 'Hide Preview' : 'Show Preview';
   updatePromptCount();
 });
 
 const PROMPT_MODE_HINTS = {
-  bulk: 'Bulk Prompt: paste karo — tags (scene / prompt / number / #00-01) app khud pehchan kar prompts alag karega; tags na hon to har line ek prompt.',
-  paragraph: 'Paragraph Prompt: ek paragraph = ek prompt — blank line = naya prompt.'
+  bulk: 'Bulk Prompt: just paste — the app detects tags (scene / prompt / number / #00-01) itself and separates the prompts; without tags, each line is one prompt.',
+  paragraph: 'Paragraph Prompt: one paragraph = one prompt — a blank line = a new prompt.'
 };
 const PROMPT_MODE_PLACEHOLDERS = {
   bulk: '#00-01 A cinematic shot of a lighthouse during a storm, waves crashing...\n#00-02 A drone flyover of a green valley at sunrise, mist lifting...',
@@ -1002,7 +1002,7 @@ document.getElementById('btn-import-prompts-file').addEventListener('click', asy
         updatePromptCount();
       }
     } else if (res && !res.canceled) {
-      await showInfoModal('File import nahi ho payi', (res && res.error) || 'File import nahi ho payi.');
+      await showInfoModal('File import failed', (res && res.error) || 'The file could not be imported.');
     }
   } catch (err) {
     await showInfoModal('File import fail', err.message);
@@ -1032,7 +1032,7 @@ function makePreviewButton(taskId) {
     btn.disabled = true;
     try {
       const res = await window.api.previewVideo(taskId);
-      if (res && res.success === false) showToast(res.error || 'Preview khul nahi paya.', 'error');
+      if (res && res.success === false) showToast(res.error || 'The preview could not be opened.', 'error');
     } catch (err) {
       showToast(`Preview fail: ${err.message}`, 'error');
     }
@@ -1048,7 +1048,7 @@ function makeRetryButton(taskId) {
     try {
       const res = await window.api.retryTask(taskId);
       if (res && res.success === false) {
-        showToast(res.error || 'Retry shuru nahi ho paya.', 'error');
+        showToast(res.error || 'The retry could not be started.', 'error');
         retryBtn.disabled = false;
       } else {
         switchTo('generate');
@@ -1185,7 +1185,7 @@ document.getElementById('btn-open-folder').addEventListener('click', async () =>
     const folder = document.getElementById('setting-folder').value;
     if (folder) await window.api.openFolder(folder);
   } catch (err) {
-    showToast(`Folder khul nahi paya: ${err.message}`, 'error');
+    showToast(`Could not open the folder: ${err.message}`, 'error');
   }
 });
 
@@ -1217,11 +1217,11 @@ document.getElementById('btn-clear-log').addEventListener('click', async () => {
 // (Defaults) now — the Generate page has no workers box any more.
 // Every run reads the SAVED value fresh, so a Settings change applies
 // to the very next Generate without touching this page.
-let savedConcurrencyLimit = 3;
+let savedConcurrencyLimit = 4;
 
 async function readSavedConcurrency() {
   try {
-    const v = await window.api.getSetting('concurrency', '3');
+    const v = await window.api.getSetting('concurrency', '');
     if (['1', '2', '3', '4', '5'].includes(String(v))) savedConcurrencyLimit = Number(v);
   } catch (e) { /* savedConcurrencyLimit keeps its last known value */ }
   return savedConcurrencyLimit;
@@ -1292,14 +1292,14 @@ document.getElementById('btn-generate').addEventListener('click', async () => {
   try {
     detailed = parseCurrentPrompts(raw);
   } catch (err) {
-    await showInfoModal('Prompts padhe nahi ja sake', `Prompts ko alag karne me dikkat aayi: ${err.message}\n\nText waisa ka waisa box me hai — mode badal kar (Bulk Prompt / Paragraph Prompt) dobara try karo.`);
+    await showInfoModal('Prompts could not be read', `There was a problem separating the prompts: ${err.message}\n\nThe text is still in the box as it was — change the mode (Bulk Prompt / Paragraph Prompt) and try again.`);
     return;
   }
   const prompts = detailed.items.map((item, i) => ({ text: item.text, tag: item.tag, index: i }));
   if (prompts.length === 0) {
-    await showInfoModal('Prompt chahiye', promptMode === 'paragraph'
-      ? 'Kam se kam ek paragraph likho — blank line = naya prompt.'
-      : 'Kam se kam ek prompt paste karo — Bulk mode tags/andaaz khud pehchan lega.');
+    await showInfoModal('Prompt needed', promptMode === 'paragraph'
+      ? 'Write at least one paragraph — a blank line = a new prompt.'
+      : 'Paste at least one prompt — Bulk mode will detect the tags/style itself.');
     return;
   }
 
@@ -1324,19 +1324,19 @@ document.getElementById('btn-generate').addEventListener('click', async () => {
     const names = dupMatches.map(m => `#${m.index + 1}`).join(', ');
     const anyMidFlight = dupMatches.some(m => m.needsCheck || m.status === 'running');
     const resume = await showConfirmModal(
-      'Ye prompt pehle se pending hai',
-      `${dupMatches.length} prompt (${names}) pehle se queue me ${anyMidFlight ? 'aadha bana hua / pending' : 'pending'} hai. Dobara Generate karne par Flow unke credits DOBARA kaatega.\n\nSahi tareeka: pehle pending prompts ko Resume karo — jo Flow ko bheje ja chuke the wo pehle check honge, dobara credits nahi katenge.`,
-      { okText: 'Resume karo (sahi tareeka)', cancelText: 'Phir bhi naya chalao' }
+      'This prompt is already pending',
+      `${dupMatches.length} prompt(s) (${names}) are already in the queue as ${anyMidFlight ? 'partly generated / pending' : 'pending'}. Generating again will make Flow deduct their credits AGAIN.\n\nThe right way: Resume the pending prompts first — the ones already sent to Flow will be checked first, and credits will not be deducted again.`,
+      { okText: 'Resume instead (recommended)', cancelText: 'Run new anyway' }
     );
     if (resume) {
       await startResumeFlow();
-      showToast('Purane pending prompts resume ho rahe hain. Naye prompts (jo duplicate nahi the) inke baad Generate kar sakte ho.', 'info');
+      showToast('The old pending prompts are resuming. You can Generate the new prompts (the ones that were not duplicates) after these.', 'info');
       return;
     }
     const sure = await showConfirmModal(
-      'Pakka naya chalao?',
-      'Naya run in prompts ke credits dobara kaatega, aur purane pending renders alag se bane rahenge. Aam taur par ye paisa zaaya hota hai.',
-      { okText: 'Haan, naya chalao', cancelText: 'Nahi, rehne do', danger: true }
+      'Run new for sure?',
+      'A new run will deduct these prompts\' credits again, and the old pending renders will keep generating separately. Usually this is money wasted.',
+      { okText: 'Yes, run new', cancelText: 'No, leave it', danger: true }
     );
     if (!sure) return;
   }
@@ -1380,7 +1380,7 @@ document.getElementById('btn-stop').addEventListener('click', async (e) => {
   try {
     await window.api.stopGeneration();
   } catch (err) {
-    showToast(`Stop nahi ho paya: ${err.message}`, 'error');
+    showToast(`Could not stop: ${err.message}`, 'error');
   }
   setRunningUI(false);
 });
@@ -1422,19 +1422,19 @@ function renderSequenceBanner(report) {
     for (const p of suffixed) {
       const line = el('div', 'seq-line ok');
       line.appendChild(el('span', 'tag-chip', p.tag));
-      line.appendChild(el('span', 'seq-text', `POORA — file "${p.fileName}" hai (asal naam par pehle se ek file thi, isliye suffix wala naam mila — video bilkul sahi hai)`));
+      line.appendChild(el('span', 'seq-text', `COMPLETE — the file is "${p.fileName}" (a file already existed under the original name, so it got a suffixed name — the video is completely fine)`));
       sequenceBanner.appendChild(line);
     }
   };
   if (report.complete) {
-    head.appendChild(el('span', 'seq-title', `✔ Sequence poori: ${report.total} me se ${report.total} videos maujood hain`));
+    head.appendChild(el('span', 'seq-title', `✔ Sequence complete: all ${report.total} of ${report.total} videos are present`));
     sequenceBanner.appendChild(head);
     suffixLines();
   } else {
     head.appendChild(el('span', 'seq-title',
-      `⚠ Sequence: ${report.total} me se ${report.presentCount} poore` +
+      `⚠ Sequence: ${report.presentCount} of ${report.total} complete` +
       (report.missing.length ? ` · ${report.missing.length} MISSING` : '') +
-      (report.wrongName.length ? ` · ${report.wrongName.length} GALAT NAAM` : '')));
+      (report.wrongName.length ? ` · ${report.wrongName.length} WRONG NAME` : '')));
     sequenceBanner.appendChild(head);
 
     for (const m of report.missing) {
@@ -1446,23 +1446,23 @@ function renderSequenceBanner(report) {
     for (const w of report.wrongName) {
       const line = el('div', 'seq-line wrong');
       line.appendChild(el('span', 'tag-chip', w.tag));
-      line.appendChild(el('span', 'seq-text', `GALAT NAAM — file "${w.currentName}" hai, hona chahiye "${w.expectedName}"`));
+      line.appendChild(el('span', 'seq-text', `WRONG NAME — the file is "${w.currentName}", it should be "${w.expectedName}"`));
       if (w.canRename) {
-        const btn = el('button', 'mini-btn seq-rename', 'Sahi naam par rename karo');
+        const btn = el('button', 'mini-btn seq-rename', 'Rename to the correct name');
         btn.addEventListener('click', async () => {
           const yes = await showConfirmModal('File ka naam badlein?',
-            `"${w.currentName}" ko "${w.expectedName}" kar dein? Ye is tag ki asal video hai — sirf naam theek hoga, video waise ka waisa rahega.`,
-            { okText: 'Haan, rename karo' });
+            `Rename "${w.currentName}" to "${w.expectedName}"? This is this tag's actual video — only the name will be fixed; the video stays exactly as it is.`,
+            { okText: 'Yes, rename it' });
           if (!yes) return;
           btn.disabled = true;
           try {
             const res = await window.api.renameTaskFile(w.taskId);
             if (res && res.success) {
-              showToast(`Naam theek ho gaya: ${res.fileName}`, 'success');
+              showToast(`Name fixed: ${res.fileName}`, 'success');
               await refreshSequenceReport();
               loadHistory();
             } else {
-              showToast((res && res.error) || 'Rename nahi ho paya.', 'error');
+              showToast((res && res.error) || 'Rename failed.', 'error');
               btn.disabled = false;
             }
           } catch (err) {
@@ -1472,7 +1472,7 @@ function renderSequenceBanner(report) {
         });
         line.appendChild(btn);
       } else {
-        line.appendChild(el('span', 'seq-note', `("${w.expectedName}" pehle se maujood hai — overwrite nahi hoga; pehle usey move karo)`));
+        line.appendChild(el('span', 'seq-note', `("${w.expectedName}" already exists — it will not be overwritten; move it first)`));
       }
       sequenceBanner.appendChild(line);
     }
@@ -1480,12 +1480,12 @@ function renderSequenceBanner(report) {
 
     if (report.missing.length > 0) {
       const actions = el('div', 'seq-actions');
-      const btn = el('button', 'primary', `🔁 Sirf Missing Dobara Banao (${report.missing.length})`);
+      const btn = el('button', 'primary', `🔁 Regenerate Missing Only (${report.missing.length})`);
       btn.addEventListener('click', async () => {
         const tags = report.missing.map(m => m.tag).join(', ');
-        const yes = await showConfirmModal('Sirf missing dobara banein?',
-          `${report.missing.length} missing video dobara banege: ${tags}\n\nBane hue videos ko haath NAHI lagega — credits sirf inhi missing par lagenge, aur naye videos apne ASAL tag-naam se hi save honge (number dobara nahi badlega).`,
-          { okText: 'Haan, sirf missing banao' });
+        const yes = await showConfirmModal('Regenerate only the missing ones?',
+          `${report.missing.length} missing video(s) will be generated again: ${tags}\n\nThe already-made videos will NOT be touched — credits will be spent only on these missing ones, and the new videos will be saved under their ORIGINAL tag names (the number will not change again).`,
+          { okText: 'Yes, make only the missing ones' });
         if (!yes) return;
         btn.disabled = true;
         try {
@@ -1495,9 +1495,9 @@ function renderSequenceBanner(report) {
             taskRows.clear();
             taskList.innerHTML = '';
             setRunningUI(true);
-            showToast(`${res.totalPrompts} missing prompt(s) dobara chal rahe hain.`, 'success');
+            showToast(`${res.totalPrompts} missing prompt(s) are running again.`, 'success');
           } else {
-            showToast((res && res.error) || 'Retry shuru nahi ho paya.', 'error');
+            showToast((res && res.error) || 'The retry could not be started.', 'error');
             btn.disabled = false;
           }
         } catch (err) {
@@ -1660,7 +1660,7 @@ function renderHistoryTable() {
   const visible = filteredHistoryRows();
   historyTbody.innerHTML = '';
   historyEmpty.style.display = visible.length === 0 ? 'block' : 'none';
-  historyEmpty.textContent = historyRows.length === 0 ? 'Nothing yet.' : 'Is search/filter me koi video nahi mila.';
+  historyEmpty.textContent = historyRows.length === 0 ? 'Nothing yet.' : 'No video found in this search/filter.';
   for (const r of visible) {
     const tr = document.createElement('tr');
     if (historySelected.has(r.id)) tr.className = 'selected';
@@ -1708,7 +1708,7 @@ function renderHistoryTable() {
       const folderBtn = el('button', '', '📂');
       folderBtn.title = 'Is video ka folder kholo';
       folderBtn.addEventListener('click', async () => {
-        try { if (r.dir) await window.api.openFolder(r.dir); } catch (err) { showToast(`Folder khul nahi paya: ${err.message}`, 'error'); }
+        try { if (r.dir) await window.api.openFolder(r.dir); } catch (err) { showToast(`Could not open the folder: ${err.message}`, 'error'); }
       });
       tdAct.appendChild(folderBtn);
     }
@@ -1742,7 +1742,7 @@ async function loadHistory() {
     historyRows = [];
     historyTbody.innerHTML = '';
     historyEmpty.style.display = 'block';
-    historyEmpty.textContent = `History load nahi ho payi: ${err.message}`;
+    historyEmpty.textContent = `History could not be loaded: ${err.message}`;
     return;
   }
   historyRows = (rows || []).map(mapHistoryRow);
@@ -1793,7 +1793,7 @@ document.getElementById('btn-history-open-folder').addEventListener('click', asy
     const folder = document.getElementById('setting-folder').value || await window.api.getDefaultDownloadFolder();
     if (folder) await window.api.openFolder(folder);
   } catch (err) {
-    showToast(`Folder khul nahi paya: ${err.message}`, 'error');
+    showToast(`Could not open the folder: ${err.message}`, 'error');
   }
 });
 document.getElementById('btn-delete-selected').addEventListener('click', async () => {
@@ -1802,18 +1802,18 @@ document.getElementById('btn-delete-selected').addEventListener('click', async (
   const ids = [...historySelected];
   if (ids.length === 0) return;
   const yes = await showConfirmModal(
-    'Selected videos delete karein?',
-    `${ids.length} video(s) select hue hain.\n\nDelete karne par unki video FILE bhi disk se delete ho jayegi aur History record bhi. Ye wapas nahi aayega.`,
-    { okText: 'Haan, file + record delete karo', danger: true }
+    'Delete the selected videos?',
+    `${ids.length} video(s) are selected.\n\nOn deleting, their video FILE will also be deleted from disk, along with the History record. This cannot be undone.`,
+    { okText: 'Yes, delete file + record', danger: true }
   );
   if (!yes) return;
   try {
     const res = await window.api.deleteHistoryTasks(ids, true);
     if (res && res.success) {
       historySelected.clear();
-      showToast(`${res.deleted} record delete hue · ${res.filesDeleted} file(s) bhi delete ho gayin.${res.skippedFiles && res.skippedFiles.length ? ` ${res.skippedFiles.length} file delete nahi ho payi (allowed folder ke bahar).` : ''}`, 'success');
+      showToast(`${res.deleted} record(s) deleted · ${res.filesDeleted} file(s) also deleted.${res.skippedFiles && res.skippedFiles.length ? ` ${res.skippedFiles.length} file(s) could not be deleted (outside the allowed folder).` : ''}`, 'success');
     } else {
-      showToast((res && res.error) || 'Delete nahi ho paya.', 'error');
+      showToast((res && res.error) || 'Delete failed.', 'error');
     }
   } catch (err) {
     showToast(`Delete fail: ${err.message}`, 'error');
@@ -1821,12 +1821,12 @@ document.getElementById('btn-delete-selected').addEventListener('click', async (
   loadHistory();
 });
 document.getElementById('btn-clear-history').addEventListener('click', async () => {
-  const yes = await showConfirmModal('History clear karein?', 'Saari completed/failed history ke RECORDS hata dein? Video files disk par hi rahengi — sirf list saaf hogi. (Usage counts bache rahenge.)', { okText: 'Haan, sirf records clear karo', danger: true });
+  const yes = await showConfirmModal('Clear the history?', 'Remove all completed/failed history RECORDS? The video files will stay on disk — only the list will be cleared. (Usage counts will remain.)', { okText: 'Yes, clear only the records', danger: true });
   if (!yes) return;
   try {
     await window.api.clearHistory();
   } catch (err) {
-    await showInfoModal('History clear nahi ho payi', err.message);
+    await showInfoModal('History could not be cleared', err.message);
     return;
   }
   historySelected.clear();
@@ -1868,7 +1868,7 @@ function activityRow(entry, full = false) {
   if (entry.accountName) bits.push(`Account: ${entry.accountName}`);
   if (entry.promptIndex !== null && entry.promptIndex !== undefined) bits.push(`Prompt #${entry.promptIndex + 1}`);
   if (entry.stage) bits.push(`Stage: ${entry.stage}`);
-  if (entry.reason) bits.push(`Wajah: ${entry.reason}`);
+  if (entry.reason) bits.push(`Reason: ${entry.reason}`);
   main.appendChild(el('span', 'msg', bits.length ? `${entry.message || ''} — ${bits.join(' · ')}` : (entry.message || '')));
   const detailLines = [];
   if (entry.accountName) detailLines.push(`Account: ${entry.accountName}`);
@@ -1887,7 +1887,7 @@ function activityRow(entry, full = false) {
   copyBtn.addEventListener('click', async (e) => {
     e.stopPropagation();
     const ok = await copyTextToClipboard(formatActivityEntryForCopy(entry));
-    showToast(ok ? 'Entry copy ho gayi — kahin bhi paste karke bhej sakte ho.' : 'Copy nahi ho paya.', ok ? 'success' : 'error');
+    showToast(ok ? 'Entry copied — you can paste it anywhere and send it.' : 'Copy failed.', ok ? 'success' : 'error');
   });
   row.appendChild(copyBtn);
   row.appendChild(el('time', '', entry.time || ''));
@@ -2009,17 +2009,17 @@ document.getElementById('btn-copy-activity').addEventListener('click', async () 
     ? activityCache
     : activityCache.filter(e => e.category === activityFilter);
   if (filtered.length === 0) {
-    showToast('Copy karne ke liye koi activity entry nahi hai.');
+    showToast('There is no activity entry to copy.');
     return;
   }
   const text = activityMode === 'simple'
     ? filtered.map(formatActivityEntrySimple).filter(Boolean).join('\n')
     : filtered.map(formatActivityEntryForCopy).filter(Boolean).join('\n\n');
   const ok = await copyTextToClipboard(text);
-  showToast(ok ? `Log copy ho gaya (${filtered.length} entries) — kahin bhi paste karke bhej sakte ho.` : 'Copy nahi ho paya.', ok ? 'success' : 'error');
+  showToast(ok ? `Log copied (${filtered.length} entries) — you can paste it anywhere and send it.` : 'Copy failed.', ok ? 'success' : 'error');
 });
 document.getElementById('btn-clear-activity').addEventListener('click', async () => {
-  const yes = await showConfirmModal('Activity clear karein?', 'Saari activity history clear kar dein? Ye wapas nahi aayegi.', { okText: 'Haan, clear karo', danger: true });
+  const yes = await showConfirmModal('Clear the activity?', 'Clear all activity history? This cannot be undone.', { okText: 'Yes, clear it', danger: true });
   if (!yes) return;
   try {
     await window.api.clearActivity();
@@ -2027,7 +2027,7 @@ document.getElementById('btn-clear-activity').addEventListener('click', async ()
     renderActivityMini();
     renderActivityFull();
   } catch (err) {
-    await showInfoModal('Activity clear nahi ho payi', err.message);
+    await showInfoModal('Activity could not be cleared', err.message);
   }
 });
 
@@ -2040,7 +2040,7 @@ async function loadSettings() {
       window.api.getSetting('default_model', ''),
       window.api.getSetting('default_duration', ''),
       window.api.getSetting('default_aspect', ''),
-      window.api.getSetting('concurrency', '3'),
+      window.api.getSetting('concurrency', ''),
       window.api.getDefaultDownloadFolder(),
       window.api.getSetting('chrome_path', ''),
       window.api.getSetting('preview_autoplay', '1'),
@@ -2059,6 +2059,9 @@ async function loadSettings() {
       // note line and the box can never disagree on a fresh install.
       savedConcurrencyLimit = Number(document.getElementById('setting-parallel').value) || 4;
     }
+    // v2.14.0: the note line under the boxes must show the same number
+    // the select shows — refresh it once the saved value is known.
+    renderGenAccountsLine();
     if (folder) {
       document.getElementById('pref-folder').value = folder;
       document.getElementById('setting-folder').value = folder;
@@ -2081,7 +2084,7 @@ async function renderAbout() {
     const box = document.getElementById('about-box');
     box.innerHTML = '';
     const lines = [
-      ['Version', 'FlowStudio Lite v2.13.0'],
+      ['Version', 'FlowStudio Lite v2.14.0'],
       ['Accounts', String(currentAccounts.length)],
       ['Total videos saved', stats ? String(stats.total) : '—'],
       ['Design', 'Warm Premium (Dark) + White appearance — change it above']
@@ -2106,7 +2109,7 @@ function bindPref(id, key, mirrorId) {
     }
     // v2.5.0: concurrency is Settings-only now — keep the Generate
     // status line's limit in step the moment it changes.
-    if (key === 'concurrency') savedConcurrencyLimit = Number(node.value) || 3;
+    if (key === 'concurrency') { savedConcurrencyLimit = Number(node.value) || 4; renderGenAccountsLine(); }
     updateSidebarTotals();
   });
 }
@@ -2182,7 +2185,6 @@ async function setBrowserBg(bgOn) {
   } catch (err) {}
 }
 document.getElementById('pref-browser-bg').addEventListener('change', (e) => setBrowserBg(!e.target.checked));
-document.getElementById('setting-browser-bg').addEventListener('change', (e) => setBrowserBg(!e.target.checked));
 
 // ---------- Events ----------
 window.api.onLog(addLog);
@@ -2337,7 +2339,7 @@ window.api.onCookieCheckUpdate((data) => {
   } catch (err) {
     // Never boot into a silent blank window.
     accountsEmpty.style.display = 'block';
-    accountsEmpty.textContent = `App start hone me dikkat aayi: ${err.message} — app ko band karke dobara kholo.`;
+    accountsEmpty.textContent = `There was a problem starting the app: ${err.message} — close the app and open it again.`;
   }
 })();
 
@@ -2558,7 +2560,7 @@ if (btnCustomTagAdd) btnCustomTagAdd.addEventListener('click', async () => {
 });
 
 // ---------- Updates box ----------
-const APP_VERSION = '2.13.0';
+const APP_VERSION = '2.14.0';
 function versionNewer(a, b) {
   const pa = String(a || '').replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0);
   const pb = String(b || '').replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0);

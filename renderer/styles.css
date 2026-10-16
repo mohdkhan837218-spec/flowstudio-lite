@@ -1172,5 +1172,37 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; margin-bottom: 10px;
 .ck-name { font-size: 11px; }
 
 /* v2.13.0: note rows under a unified account line */
-.ck-note{font-size:10.5px;line-height:1.45;color:var(--muted,#a89f8d);padding:2px 8px 6px 26px}
+.ck-note{font-size:10.5px;line-height:1.45;color:var(--muted,#a89f8d);padding:2px 8px 6px 26px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .ck-note.error{color:#e08a7a}
+
+/* v2.14.0 — short-window compaction (owner's screen: the middle
+   column scrolled and the OUTPUT box fell below the fold at
+   1366x768). At heights <=840 the form must fit whole: smaller
+   textarea, tighter boxes, slimmer Activity. */
+@media (max-height: 840px) {
+  .gen-form textarea { min-height: 38px; height: 38px; margin-bottom: 6px; }
+  .gen-form .box { padding: 10px 12px; }
+  .gen-form .settings-box { padding: 8px 10px; margin-top: 8px; }
+  .settings-box select, .settings-box input[type="text"] { height: 31px; }
+  .zd-stream { min-height: 40px; max-height: 64px; }
+  .activity-panel { padding: 10px 12px; margin-top: 8px; }
+  .top-strip { padding: 5px 10px; }
+  .prompts-title-row { margin-bottom: 4px; }
+  .prompts-title-row select { height: 30px; }
+  #prompt-mode-seg { margin-bottom: 6px; }
+  #prompt-mode-seg .seg-btn { padding: 5px 12px; }
+  .gen-form .settings-box .box-title { margin-bottom: 6px; }
+  .gen-settings-grid { gap: 8px; }
+  .gen-form .toolbar { margin-top: 6px; }
+  .gen-form .toolbar button { height: 30px; }
+  .actions > button { padding-top: 7px; padding-bottom: 7px; }
+  .prompts-title-row button { padding: 5px 10px; }
+  #prompt-mode-seg { padding: 3px; }
+  .gen-settings-grid label { font-size: 11px; margin-bottom: 2px; }
+  .gen-form .settings-box { padding-top: 7px; padding-bottom: 7px; }
+  .zd-stream { max-height: 46px; min-height: 36px; }
+  .zd-head { margin-bottom: 2px; }
+  .run-accounts-line { margin-top: 3px; margin-bottom: 3px; }
+  .actions { margin-top: 5px; }
+  .actions > button { padding-top: 5px; padding-bottom: 5px; }
+}
