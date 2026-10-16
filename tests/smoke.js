@@ -1785,10 +1785,10 @@ console.log('\n[4] FFmpeg getVideoDimensions fix');
       assert.ok(html.includes(`id="${id}"`), `index.html carries #${id}`);
     }
     assert.ok(html.includes('data-view="import"'), 'nav has the Import tab');
-    assert.ok(html.includes('id="strip-version">v2.14.0</span>'), 'strip badge is v2.14.0');
+    assert.ok(html.includes('id="strip-version">v2.15.0</span>'), 'strip badge is v2.15.0');
     assert.ok(!html.includes('id="history-list"'), 'the old card-style history list is gone (table now)');
     const appSrc = fs.readFileSync(path.join(ROOT, 'renderer', 'app.js'), 'utf8');
-    assert.ok(appSrc.includes('FlowStudio Lite v2.14.0'), 'About box is v2.14.0');
+    assert.ok(appSrc.includes('FlowStudio Lite v2.15.0'), 'About box is v2.15.0');
     assert.ok(appSrc.includes('importCookieText'), 'paste path wired in the renderer');
     assert.ok(appSrc.includes('Chrome ↗'), 'account cards carry the Chrome ↗ button');
     const css = fs.readFileSync(path.join(ROOT, 'renderer', 'styles.css'), 'utf8');
@@ -1802,7 +1802,7 @@ console.log('\n[4] FFmpeg getVideoDimensions fix');
     const preloadSrc = fs.readFileSync(path.join(ROOT, 'preload.js'), 'utf8');
     assert.ok(/addAccount: \(name, email\) => ipcRenderer\.invoke\('add-account', \{ name/.test(preloadSrc), 'add-account IPC shape is {name, email}');
     const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-    assert.strictEqual(pkg.version, '2.14.0');
+    assert.strictEqual(pkg.version, '2.15.0');
   });
 
   console.log('\n[18] v2.3.0: smart parser, tag naming, sequence integrity, retry-missing');
@@ -2123,7 +2123,7 @@ console.log('\n[4] FFmpeg getVideoDimensions fix');
       assert.ok(preloadSrc.includes(api), `preload exposes ${api}`);
     }
     const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-    assert.strictEqual(pkg.version, '2.14.0');
+    assert.strictEqual(pkg.version, '2.15.0');
   });
 
   console.log('\n[19] v2.4.0: short-prompt binding, tile states, heartbeat, duplicate guard, log hygiene, outputs lock, background plan, account rows');
@@ -2229,12 +2229,12 @@ console.log('\n[4] FFmpeg getVideoDimensions fix');
     assert.ok(appSrc.includes('checkPromptDuplicates'), 'renderer runs the guard before Generate');
     assert.ok(appSrc.includes('startResumeFlow'), 'the guard can route to Resume');
     assert.ok(appSrc.includes('Resume instead (recommended)'), 'Resume is the modal\u2019s primary (safe) choice');
-    assert.ok(appSrc.includes('renderAccountLines') && appSrc.includes('ck-line'), 'accounts render as unified sidebar lines (v2.14.0)');
+    assert.ok(appSrc.includes('renderAccountLines') && appSrc.includes('ck-line'), 'accounts render as unified sidebar lines (v2.15.0)');
     assert.ok(appSrc.includes('taskStartTimes'), 'generating rows carry a live elapsed clock');
     const html = fs.readFileSync(path.join(ROOT, 'renderer', 'index.html'), 'utf8');
-    assert.ok(html.includes('id="cookie-lines"'), 'the unified lines box is the accounts container (v2.14.0)');
-    assert.ok(!html.includes('id="accounts-list"'), 'old accounts cards list GAYA (v2.14.0)');
-    assert.ok(html.includes('id="strip-version">v2.14.0</span>'), 'strip badge is v2.14.0');
+    assert.ok(html.includes('id="cookie-lines"'), 'the unified lines box is the accounts container (v2.15.0)');
+    assert.ok(!html.includes('id="accounts-list"'), 'old accounts cards list GAYA (v2.15.0)');
+    assert.ok(html.includes('id="strip-version">v2.15.0</span>'), 'strip badge is v2.15.0');
     const css = fs.readFileSync(path.join(ROOT, 'renderer', 'styles.css'), 'utf8');
     assert.ok(css.includes('.account-row'), 'row styles exist');
     const fa = fs.readFileSync(path.join(ROOT, 'engine', 'flowAutomation.js'), 'utf8');
@@ -2245,7 +2245,7 @@ console.log('\n[4] FFmpeg getVideoDimensions fix');
     const wp = fs.readFileSync(path.join(ROOT, 'engine', 'workerPool.js'), 'utf8');
     assert.ok(wp.includes('onTaskHeartbeat'), 'the pool turns state changes into Activity entries');
     const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-    assert.strictEqual(pkg.version, '2.14.0');
+    assert.strictEqual(pkg.version, '2.15.0');
   });
 
   console.log('\n[20] v2.5.0: prompt-entry root cause pin, accounts box, live-only selection, settings concurrency');
@@ -2268,12 +2268,12 @@ console.log('\n[4] FFmpeg getVideoDimensions fix');
       'btn-accounts-delete-selected', 'btn-accounts-clear-selection', 'accounts-status-line', 'accounts-live-only', 'gen-live-note']) {
       assert.ok(html.includes(`id="${id}"`), `index.html carries #${id}`);
     }
-    // v2.14.0: the old accounts filter tabs are GONE — the status
+    // v2.15.0: the old accounts filter tabs are GONE — the status
     // buttons above the unified lines (All/Checking/Live/Fail) are
     // the only filter now.
-    assert.ok(!html.includes('id="account-filter-seg"'), 'purana accounts filter seg GAYA (v2.14.0)');
-    assert.ok(!html.includes('id="accounts-nomatch"'), 'accounts-nomatch GAYA (v2.14.0)');
-    assert.ok(!html.includes('data-filter="ready"'), 'purane filter tabs GAYA (v2.14.0)');
+    assert.ok(!html.includes('id="account-filter-seg"'), 'purana accounts filter seg GAYA (v2.15.0)');
+    assert.ok(!html.includes('id="accounts-nomatch"'), 'accounts-nomatch GAYA (v2.15.0)');
+    assert.ok(!html.includes('data-filter="ready"'), 'purane filter tabs GAYA (v2.15.0)');
     assert.ok(!html.includes('id="setting-concurrency"'), 'Generate se workers select GAYA (Settings-only ab)');
     assert.ok(!html.includes('workers-box'), 'Generate se gold workers box GAYA');
     assert.ok(!html.includes('Accounts khud rotate hote hain'), 'faltu samjhane wala paragraph GAYA');
@@ -2282,7 +2282,7 @@ console.log('\n[4] FFmpeg getVideoDimensions fix');
     assert.ok(mainSrc.includes("live_only_accounts"), 'createPool live-only setting padhta hai');
     assert.ok(mainSrc.includes('FLOW_LITE_UI_TEST'), 'the prompt-entry boot UI hook lives in main (run: npm run test:ui)');
     const appSrc = fs.readFileSync(path.join(ROOT, 'renderer', 'app.js'), 'utf8');
-    assert.ok(appSrc.includes('lineMatchesFilter'), 'renderer filter predicate wired hai (v2.14.0: unified line filter)');
+    assert.ok(appSrc.includes('lineMatchesFilter'), 'renderer filter predicate wired hai (v2.15.0: unified line filter)');
     assert.ok(appSrc.includes('selectedAccounts'), 'renderer tick-selection wired hai');
     assert.ok(appSrc.includes('readSavedConcurrency'), 'Generate run saved concurrency padhta hai');
   });
@@ -2403,8 +2403,8 @@ console.log('\n[4] FFmpeg getVideoDimensions fix');
     assert.ok(!side.includes('rotation-box'), 'v2.11 final: Account rotation section GAYA');
     assert.ok(side.includes('id="btn-add-account"') && side.includes('id="btn-import-cookie"'), 'dono add buttons box ke andar (ids barkarar)');
     assert.ok(side.includes('id="btn-sync-all"'), 'Verify All grid me maujood (id barkarar)');
-    assert.ok(!side.includes('id="side-stats-line"'), 'v2.14.0: purani stats line GAYA (totals sirf strip me)');
-    assert.ok(!side.includes('id="accounts-list"'), 'v2.14.0: purana cards list GAYA — ek hi unified lines box');
+    assert.ok(!side.includes('id="side-stats-line"'), 'v2.15.0: purani stats line GAYA (totals sirf strip me)');
+    assert.ok(!side.includes('id="accounts-list"'), 'v2.15.0: purana cards list GAYA — ek hi unified lines box');
     // Tartib: head → add-bar → status buttons → lines → action grid.
     const order = ['side-tabs', 'side-box-head', 'accounts-add-bar', 'cookie-filter-seg', 'cookie-lines', 'accounts-action-grid'];
     for (let i = 1; i < order.length; i++) {
@@ -2420,9 +2420,9 @@ console.log('\n[4] FFmpeg getVideoDimensions fix');
     assert.ok(!appSrc.includes('dash-total'), 'purani dash cards ki references gayi');
     const mainSrc = fs.readFileSync(path.join(ROOT, 'main.js'), 'utf8');
     assert.ok(mainSrc.includes("const views = ['generate', 'history', 'activity', 'import', 'settings']"), 'fit hook ke views me accounts nahi');
-    assert.ok(html.includes('id="strip-version">v2.14.0</span>'), 'strip badge v2.14.0');
+    assert.ok(html.includes('id="strip-version">v2.15.0</span>'), 'strip badge v2.15.0');
     const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-    assert.strictEqual(pkg.version, '2.14.0');
+    assert.strictEqual(pkg.version, '2.15.0');
   });
 
   console.log('\n[22] v2.7.0: download kai-ranneeti, download-fail = resubmit NAHI, log saafai, accounts ginati');
@@ -2458,7 +2458,7 @@ console.log('\n[4] FFmpeg getVideoDimensions fix');
     const fit = fs.readFileSync(path.join(ROOT, 'tests', 'fitcheck.js'), 'utf8');
     assert.ok(fit.includes('1000x650'), 'fit test ab teen sizes par hai (1000x650 samet)');
     const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-    assert.strictEqual(pkg.version, '2.14.0');
+    assert.strictEqual(pkg.version, '2.15.0');
   });
 
   test('failover stage: download fail ki pehchan (kind download) barkarar', () => {
@@ -2676,7 +2676,7 @@ console.log('\n[4] FFmpeg getVideoDimensions fix');
     const wp = fs.readFileSync(path.join(ROOT, 'engine', 'workerPool.js'), 'utf8');
     assert.ok(wp.includes('onBackendMedia'), 'pool backend bandhan ko Activity me badalta hai');
     const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-    assert.strictEqual(pkg.version, '2.14.0');
+    assert.strictEqual(pkg.version, '2.15.0');
   });
 
   await testAsync('engine v2.8.0: backend bandhan se seedha download + fetch-fail par grid ki taraf (submit engine se bahar hi nahi)', async () => {
@@ -2796,7 +2796,7 @@ console.log('\n[4] FFmpeg getVideoDimensions fix');
     assert.ok(!fa.includes(": 'Google Safety / Policy Filter'"), 'blanket "Google Safety / Policy Filter" wajah GAYA');
     assert.ok(fa.includes("failureKind === 'safety'"), 'tile fail ki wajah failureKind se banti hai');
     const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-    assert.strictEqual(pkg.version, '2.14.0');
+    assert.strictEqual(pkg.version, '2.15.0');
   });
 
   test('v2.9.0 hifazat: apusht wajah = bounded retry mumkin, sabit jumla = prompt-level pakka', () => {
@@ -2867,7 +2867,7 @@ console.log('\n[4] FFmpeg getVideoDimensions fix');
     const appSrc = fs.readFileSync(path.join(ROOT, 'renderer', 'app.js'), 'utf8');
     assert.ok(appSrc.includes('suffixNote'), 'renderer suffix wali poori files ki line dikhata hai');
     const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-    assert.strictEqual(pkg.version, '2.14.0');
+    assert.strictEqual(pkg.version, '2.15.0');
   });
 
   console.log(`\n${passed} passed, ${failed} failed`);
