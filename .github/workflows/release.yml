@@ -1,0 +1,34 @@
+# FlowStudio Lite — Windows installer build + release.
+# Push a version tag (e.g. v2.12.0) and GitHub builds the Setup
+# .exe on a Windows runner and publishes it as a Release together
+# with latest.yml — the file the installed app's auto-updater
+# reads. No manual steps.
+name: Build & Release (Windows)
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Build installer & publish release
+        run: npx electron-builder --win nsis --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
