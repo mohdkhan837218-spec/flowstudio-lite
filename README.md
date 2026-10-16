@@ -6,6 +6,10 @@ Built as a clean rewrite of FlowStudio V2, keeping its proven Google Flow page a
 
 ---
 
+## What's new in v2.17.0
+
+- **New app icon:** the owner picked design #39 "Comet Star" from a 100-logo sheet — a gold four-point star with a dotted comet trail and a play mark, on the app's warm dark tile. It is now the Windows app icon (desktop shortcut, taskbar, installer) and the logo inside the app's top strip.
+
 ## What's new in v2.16.0
 
 - **Fluid fit for short windows:** on the owner's 1024x768 screen the app's real working height is about 700px (title bar + taskbar), and the Resume Queue banner takes another row. The Generate form now flexes in exactly one place — the prompts textarea grows or shrinks to fill whatever height is available — settings labels sit beside their fields, and hidden rows no longer eat margins. Verified by DOM probe at 1024x700 WITH the banner showing and at 1024x768: zero scrolling anywhere except inside the prompts box and the cookie lines, exactly as specified.

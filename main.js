@@ -220,6 +220,7 @@ function createWindow() {
     minWidth: 1000,
     minHeight: 640,
     title: 'FlowStudio Lite',
+    icon: path.join(__dirname, 'build', 'icon.png'),
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
