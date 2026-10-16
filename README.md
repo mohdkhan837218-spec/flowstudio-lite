@@ -6,6 +6,11 @@ Built as a clean rewrite of FlowStudio V2, keeping its proven Google Flow page a
 
 ---
 
+## What's new in v2.15.0
+
+- **Fits a 1024x768 screen** (the owner's monitor): on smaller windows the whole interface steps down a size — the Generate page shows everything on one screen with no scrolling in the middle column; only the prompts box and the cookie lines scroll, inside their own boxes. Video Settings stays one row of four fields, the Output box is fully visible, and account names stay readable on their lines (the Chrome button becomes an arrow icon at this size so the name keeps its room).
+- **Chrome Profiles page fixed to the approved design:** the grid starts with a dashed "+ Add Account" card, and a profile whose Gmail is already an account now shows ALREADY IMPORTED with its credits and a Sync button — it can never be imported twice.
+
 ## What's new in v2.14.0
 
 - **Bug fix:** the "Parallel browsers / Mode / Live available / Running now" note line under the video settings now always matches the Parallel Browsers select — it updates the moment the selection changes, instead of keeping a stale number from before.
