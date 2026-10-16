@@ -267,7 +267,6 @@ const gotoRotationBtn = document.getElementById('btn-goto-rotation-settings');
 if (gotoRotationBtn) gotoRotationBtn.addEventListener('click', () => switchTo('settings'));
 
 // ---------- Accounts ----------
-const accountsList = document.getElementById('accounts-list');
 const accountsEmpty = document.getElementById('accounts-empty');
 let currentAccounts = [];
 // Per-account messages (login/credit errors and confirmations) are shown
@@ -284,6 +283,10 @@ const cookieStates = new Map();
 // always counted: status Ready or Low Credits.
 let accountFilter = 'all'; // 'all' | 'live' | 'ready' | 'fail'
 const selectedAccounts = new Set();
+// v2.13.0: profile accounts whose sign-in window is open and whose
+// "Done" confirmation is still pending — their sidebar line shows
+// the Done button until the login is confirmed.
+const loginPendingIds = new Set();
 
 function isLiveReadyAccount(acc) {
   return !!acc && (acc.status === 'Ready' || acc.status === 'Low Credits');
@@ -294,48 +297,57 @@ function isFailedAccount(acc) {
   const cs = cookieStates.get(acc.id);
   return !!cs && cs.state === 'fail';
 }
-function accountMatchesFilter(acc, filter) {
-  if (filter === 'live') return isLiveReadyAccount(acc);
-  if (filter === 'ready') return !!acc && acc.status === 'Ready';
-  if (filter === 'fail') return isFailedAccount(acc);
-  return true;
+// v2.13.0: ONE state per account for the unified sidebar lines —
+// the cookie-check state when there is one, else a state derived
+// from the account's own status. States: checking | live | ready |
+// fail (fail carries a plain-English reason in the line's meta).
+function lineStateOf(acc) {
+  const cs = cookieStateOf(acc);
+  if (cs) return cs;
+  const s = String((acc && acc.status) || '');
+  if (s === 'Live') return { state: 'live', reason: '' };
+  if (s === 'Ready' || s === 'Low Credits') return { state: 'ready', reason: '' };
+  if (s === 'Cooldown') return { state: 'ready', reason: 'Cooldown' };
+  if (s === 'Need Login') return { state: 'fail', reason: 'Need login' };
+  if (s === 'Unconfirmed') return { state: 'fail', reason: 'Login unconfirmed' };
+  if (s === 'Exhausted') return { state: 'fail', reason: 'Credits finished' };
+  return { state: 'fail', reason: s || 'Not checked yet' };
+}
+function lineMatchesFilter(acc, filter) {
+  if (!filter || filter === 'all') return true;
+  const st = lineStateOf(acc);
+  if (filter === 'live') return st.state === 'live' || st.state === 'ready';
+  return st.state === filter;
 }
 function accountFilterCounts() {
-  return {
-    all: currentAccounts.length,
-    live: currentAccounts.filter(isLiveReadyAccount).length,
-    ready: currentAccounts.filter(a => a && a.status === 'Ready').length,
-    fail: currentAccounts.filter(isFailedAccount).length
-  };
+  const counts = { all: currentAccounts.length, checking: 0, live: 0, fail: 0 };
+  for (const acc of currentAccounts) {
+    const st = lineStateOf(acc);
+    if (st.state === 'checking') counts.checking += 1;
+    else if (st.state === 'fail') counts.fail += 1;
+    else counts.live += 1; // live + ready
+  }
+  return counts;
 }
 function updateAccountsBoxChrome() {
   const counts = accountFilterCounts();
-  document.querySelectorAll('#account-filter-seg .seg-btn').forEach(b => {
-    const f = b.dataset.filter;
-    b.classList.toggle('active', f === accountFilter);
-    const base = { all: 'All', live: 'Live', ready: 'Ready', fail: 'Fail' }[f] || f;
-    b.textContent = `${base} (${counts[f] || 0})`;
-  });
   const sel = selectedAccounts.size;
   const syncBtn = document.getElementById('btn-accounts-sync-selected');
   const delBtn = document.getElementById('btn-accounts-delete-selected');
   if (syncBtn) syncBtn.disabled = sel === 0;
   if (delBtn) delBtn.disabled = sel === 0;
-  // v2.6.0: status line ZDola ke shabdon me — kul me se kitne chune
-  // hue, kitne live ready, aur kitne abhi confirm nahi hue (jin par
-  // Verify All chalana baki hai). "Not confirmed" = na live-ready,
-  // na fail — abhi haal pakka nahi.
-  const notConfirmed = currentAccounts.filter(a => !isLiveReadyAccount(a) && !isFailedAccount(a)).length;
+  // v2.13.0: status line counts come from the unified line states —
+  // "not confirmed" = failed-with-an-unconfirmed/not-checked reason
+  // or still checking; Verify All settles those.
+  const liveReady = currentAccounts.filter(a => { const s = lineStateOf(a); return s.state === 'live' || s.state === 'ready'; }).length;
+  const notConfirmed = currentAccounts.filter(a => { const s = lineStateOf(a); return s.state === 'checking' || s.reason === 'Login unconfirmed' || s.reason === 'Not checked yet'; }).length;
   const line = document.getElementById('accounts-status-line');
   if (line) {
-    line.textContent = `${sel} of ${counts.all} selected · ${counts.live} live ready · ${notConfirmed} not confirmed${notConfirmed > 0 ? ' (press Verify All)' : ''}`;
+    line.textContent = `${sel} of ${counts.all} selected · ${liveReady} live ready · ${notConfirmed} not confirmed${notConfirmed > 0 ? ' (press Verify All)' : ''}`;
   }
-  // v2.10.0: ZDola-style "Select all" link (sidebar box ke head me)
-  // — dikh rahe (filtered) saare selected hon to label badal jata
-  // hai, taaki ek hi link se select/clear dono hon.
   const selAll = document.getElementById('btn-select-all-accounts');
   if (selAll) {
-    const visible = currentAccounts.filter(a => accountMatchesFilter(a, accountFilter));
+    const visible = currentAccounts.filter(a => lineMatchesFilter(a, cookieFilter));
     const allSel = visible.length > 0 && visible.every(a => selectedAccounts.has(a.id));
     selAll.textContent = allSel ? 'Select none' : 'Select all';
   }
@@ -413,178 +425,22 @@ const ACC_STATUS_ICON = {
 
 function renderAccounts(accounts) {
   currentAccounts = accounts || [];
-  if (typeof renderCookieLines === 'function') renderCookieLines();
   // Selections of accounts that no longer exist are dropped quietly.
   const existingIds = new Set(currentAccounts.map(a => a.id));
   for (const id of [...selectedAccounts]) {
     if (!existingIds.has(id)) selectedAccounts.delete(id);
   }
-  accountsList.innerHTML = '';
-  accountsEmpty.style.display = currentAccounts.length === 0 ? 'block' : 'none';
-  const visible = currentAccounts.filter(a => accountMatchesFilter(a, accountFilter));
-  const noMatch = document.getElementById('accounts-nomatch');
-  if (noMatch) noMatch.style.display = (currentAccounts.length > 0 && visible.length === 0) ? 'block' : 'none';
-
-  for (const acc of visible) {
-    const row = el('div', 'account-row');
-    if (selectedAccounts.has(acc.id)) row.classList.add('selected');
-    const tick = document.createElement('input');
-    tick.type = 'checkbox';
-    tick.className = 'acc-tick';
-    tick.checked = selectedAccounts.has(acc.id);
-    tick.title = 'Bulk kaam ke liye chuno';
-    tick.addEventListener('change', () => {
-      if (tick.checked) selectedAccounts.add(acc.id);
-      else selectedAccounts.delete(acc.id);
-      row.classList.toggle('selected', tick.checked);
-      updateAccountsBoxChrome();
-    });
-    row.appendChild(tick);
-    const name = accountDisplayName(acc);
-    const st = ACC_STATUS_ICON[String(acc.status || '').toLowerCase().replace(/\s+/g, '')] || { icon: '●', tone: 'warn' };
-    row.appendChild(el('span', `acc-ico ${st.tone}`, st.icon));
-
-    const main = el('div', 'acc-main');
-    const line1 = el('div', 'acc-line1');
-    line1.appendChild(el('span', 'acc-name', name));
-    line1.appendChild(el('span', 'acc-email', acc.email || '(email sign-in / sync ke baad aayega)'));
-    line1.appendChild(statusChip(acc.status));
-    main.appendChild(line1);
-
-    const creditsText = (acc.credits === null || acc.credits === undefined) ? '— credits' : `${acc.credits} credits`;
-    const line2 = el('div', 'acc-line2');
-    line2.appendChild(document.createTextNode(`${acc.status || 'Unknown'} · ${creditsText} · 🎬 ${acc.videosCount || 0} videos`));
-    if (typeof acc.credits === 'number' && acc.credits < LOW_CREDIT_THRESHOLD && acc.status !== 'Need Login') {
-      line2.appendChild(el('span', 'low-badge', '⚠ Low credits'));
-    }
-    if (acc.lastChecked) {
-      line2.appendChild(el('span', 'acc-checked', ` · Last checked: ${acc.lastChecked}`));
-    }
-    main.appendChild(line2);
-
-    if (acc.status === 'Cooldown' && acc.restUntil) {
-      const till = new Date(acc.restUntil);
-      if (!isNaN(till)) {
-        main.appendChild(el('div', 'meta', `Resting till ${till.toLocaleString()} — rotation tab tak isse skip karega.`));
-      }
-    }
-    if (acc.status === 'Unconfirmed') {
-      main.appendChild(el('div', 'card-note', 'Login unconfirmed — ek sign-out dikha hai. Confirm karne ke liye ek baar aur Sync karo (two-strike rule), ya agar account sach me logged out hai to Sign In karo.'));
-    }
-
-    const cookieLine = cookieChipFor(acc);
-    if (cookieLine) main.appendChild(cookieLine);
-
-    const msg = accountMessages.get(acc.id);
-    if (msg) {
-      main.appendChild(el('div', msg.isError ? 'card-error' : 'card-note', msg.text));
-    }
-    row.appendChild(main);
-
-    const actions = el('div', 'btn-row acc-actions');
-    // v2.2.0 (owner's demand, his ZDola screenshot): the card's browser
-    // button is labelled "Chrome ↗" — it opens THIS account's own
-    // Chrome whenever he wants to look (generation runs in the
-    // background, so this is how he sees a browser). For a logged-out
-    // account the same window IS the sign-in window, so the label is
-    // "Sign In" there. Same openLoginWindow machinery either way; an
-    // open window never blocks anything (Indifference Rule).
-    const signInBtn = el('button', '', acc.status === 'Need Login' ? 'Sign In' : 'Chrome ↗');
-    signInBtn.title = 'Is account ka apna Chrome kholo — login ke liye bhi yahi window hai';
-    signInBtn.addEventListener('click', async () => {
-      signInBtn.disabled = true;
-      try {
-        const res = await window.api.openLoginWindow(acc.id);
-        if (res && res.success === false) {
-          setAccountMessage(acc.id, res.error || 'Login window khul nahi paya.', true);
-        } else {
-          setAccountMessage(acc.id, 'Chrome khul gaya — us window me Google login karo. Ho jaye to neeche "I\'ve logged in — Done" dabao (auto-detection bhi chalta hai).', false);
-        }
-      } catch (err) {
-        setAccountMessage(acc.id, `Login window khul nahi paya: ${err.message}`, true);
-      }
-      signInBtn.disabled = false;
-      renderAccounts(currentAccounts);
-    });
-    const doneBtn = el('button', '', "I've logged in — Done");
-    doneBtn.addEventListener('click', async () => {
-      doneBtn.disabled = true;
-      doneBtn.textContent = 'Checking…';
-      try {
-        const res = await window.api.completeLogin(acc.id);
-        if (res && res.accounts) renderAccounts(res.accounts);
-        if (res && res.success) {
-          setAccountMessage(acc.id, res.message || 'Login confirmed.', false);
-        } else {
-          setAccountMessage(acc.id, (res && res.error) || 'Login abhi confirm nahi ho paya.', true);
-        }
-      } catch (err) {
-        setAccountMessage(acc.id, `Login check failed: ${err.message}`, true);
-      }
-      doneBtn.disabled = false;
-      doneBtn.textContent = "I've logged in — Done";
-      renderAccounts(currentAccounts);
-      refreshDashboard();
-    });
-    const syncBtn = el('button', '', 'Sync');
-    syncBtn.addEventListener('click', async () => {
-      syncBtn.disabled = true;
-      syncBtn.textContent = 'Syncing…';
-      try {
-        const res = await window.api.syncAccount(acc.id);
-        if (res && res.accounts) renderAccounts(res.accounts);
-        if (res && res.success === false) {
-          setAccountMessage(acc.id, res.error || 'Sync failed.', true);
-        } else if (res && res.success) {
-          setAccountMessage(acc.id, null, false);
-        }
-      } catch (err) {
-        setAccountMessage(acc.id, `Sync failed: ${err.message}`, true);
-      }
-      syncBtn.disabled = false;
-      syncBtn.textContent = 'Sync';
-      renderAccounts(currentAccounts);
-      refreshDashboard();
-    });
-    const removeBtn = el('button', 'danger', 'Remove');
-    removeBtn.addEventListener('click', async () => {
-      const yes = await showConfirmModal(
-        'Account hatayein?',
-        `"${acc.name}" ko hata dein? Uska saved login profile aur saved cookies bhi delete ho jayenge.`,
-        { okText: 'Haan, hata do', danger: true }
-      );
-      if (!yes) return;
-      try {
-        const res = await window.api.deleteAccount(acc.id);
-        if (res && res.accounts) renderAccounts(res.accounts);
-        refreshDashboard();
-      } catch (err) {
-        setAccountMessage(acc.id, `Account hataya nahi ja saka: ${err.message}`, true);
-        renderAccounts(currentAccounts);
-      }
-    });
-    actions.appendChild(signInBtn);
-    actions.appendChild(doneBtn);
-    actions.appendChild(syncBtn);
-    actions.appendChild(removeBtn);
-    row.appendChild(actions);
-
-    accountsList.appendChild(row);
+  for (const id of [...loginPendingIds]) {
+    if (!existingIds.has(id)) loginPendingIds.delete(id);
   }
-  updateSidebarTotals();
+  renderAccountLines();
   updateAccountsBoxChrome();
 }
 
-// v2.5.0: Accounts box ke controls — filter tabs, bulk Sync/Delete,
-// selection saaf, aur "Sirf live accounts chalao" toggle (setting
+// v2.5.0: Accounts box ke controls — bulk Sync/Delete, selection
+// saaf, aur "Sirf live accounts chalao" toggle (setting
 // 'live_only_accounts'; generation ke pool selection me iska samman
 // workerPool karta hai, createPool har run par taaza padhta hai).
-document.querySelectorAll('#account-filter-seg .seg-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    accountFilter = btn.dataset.filter;
-    renderAccounts(currentAccounts);
-  });
-});
 
 document.getElementById('btn-accounts-sync-selected').addEventListener('click', async (e) => {
   const btn = e.currentTarget;
@@ -647,7 +503,7 @@ document.getElementById('btn-accounts-clear-selection').addEventListener('click'
 // Chrome badalta hai).
 const selectAllBtn = document.getElementById('btn-select-all-accounts');
 if (selectAllBtn) selectAllBtn.addEventListener('click', () => {
-  const visible = currentAccounts.filter(a => accountMatchesFilter(a, accountFilter));
+  const visible = currentAccounts.filter(a => lineMatchesFilter(a, cookieFilter));
   if (visible.length === 0) return;
   const allSel = visible.every(a => selectedAccounts.has(a.id));
   if (allSel) visible.forEach(a => selectedAccounts.delete(a.id));
@@ -2225,7 +2081,7 @@ async function renderAbout() {
     const box = document.getElementById('about-box');
     box.innerHTML = '';
     const lines = [
-      ['Version', 'FlowStudio Lite v2.12.0'],
+      ['Version', 'FlowStudio Lite v2.13.0'],
       ['Accounts', String(currentAccounts.length)],
       ['Total videos saved', stats ? String(stats.total) : '—'],
       ['Design', 'Warm Premium (Dark) + White appearance — change it above']
@@ -2519,18 +2375,10 @@ function cookieStateOf(acc) {
   if (acc.hasCookies) return { state: 'ready', reason: '' };
   return null;
 }
-function renderCookieLines() {
+function renderAccountLines() {
   const box = document.getElementById('cookie-lines');
   if (!box) return;
-  const cookieAccs = currentAccounts.filter(a => a.hasCookies || cookieStates.has(a.id));
-  const counts = { all: cookieAccs.length, checking: 0, live: 0, fail: 0 };
-  for (const acc of cookieAccs) {
-    const st = cookieStateOf(acc);
-    if (!st) continue;
-    if (st.state === 'checking') counts.checking += 1;
-    else if (st.state === 'fail') counts.fail += 1;
-    else counts.live += 1; // live + ready both count as Live here
-  }
+  const counts = accountFilterCounts();
   document.querySelectorAll('#cookie-filter-seg button').forEach(b => {
     const k = b.dataset.cfilter;
     const label = k === 'all' ? 'All' : k === 'checking' ? 'Checking' : k === 'live' ? 'Live' : 'Fail';
@@ -2538,21 +2386,15 @@ function renderCookieLines() {
     b.classList.toggle('active', cookieFilter === k);
   });
   box.innerHTML = '';
-  const visible = cookieAccs.filter(acc => {
-    if (cookieFilter === 'all') return true;
-    const st = cookieStateOf(acc);
-    if (!st) return false;
-    if (cookieFilter === 'live') return st.state === 'live' || st.state === 'ready';
-    return st.state === cookieFilter;
-  });
+  const visible = currentAccounts.filter(acc => lineMatchesFilter(acc, cookieFilter));
   if (visible.length === 0) {
-    box.appendChild(el('div', 'empty ck-empty', cookieAccs.length === 0
-      ? 'No cookie accounts yet — press "Add Cookies" to add one.'
-      : 'No cookies in this state.'));
+    box.appendChild(el('div', 'empty ck-empty', currentAccounts.length === 0
+      ? 'No accounts yet — press "+ Add Account" to sign in, or "Add Cookies" to add one.'
+      : 'No accounts in this state.'));
     return;
   }
-  visible.forEach((acc, i) => {
-    const st = cookieStateOf(acc) || { state: 'ready', reason: '' };
+  visible.forEach((acc) => {
+    const st = lineStateOf(acc);
     const line = el('div', 'ck-line');
     if (selectedAccounts.has(acc.id)) line.classList.add('selected');
     const tick = document.createElement('input');
@@ -2566,31 +2408,71 @@ function renderCookieLines() {
     });
     line.appendChild(tick);
     const main = el('div', 'ck-main');
-    main.appendChild(el('span', 'ck-name', acc.name || `Cookies ${i + 1}`));
+    main.appendChild(el('span', 'ck-name', accountDisplayName(acc)));
     let meta = '';
-    if (st.state === 'live') meta = (acc.credits === null || acc.credits === undefined) ? 'Live' : `${acc.credits} credits`;
-    else if (st.state === 'ready') meta = (acc.credits === null || acc.credits === undefined) ? 'Ready' : `${acc.credits} credits`;
+    if (st.state === 'checking') meta = 'checking…';
     else if (st.state === 'fail') meta = st.reason || 'check failed';
-    else meta = 'checking…';
+    else {
+      const creditsText = (acc.credits === null || acc.credits === undefined) ? '— credits' : `${acc.credits} credits`;
+      meta = st.reason ? `${st.reason} · ${creditsText}` : creditsText;
+      if (typeof acc.credits === 'number' && acc.credits < LOW_CREDIT_THRESHOLD && st.state !== 'fail') meta += ' · Low';
+    }
     main.appendChild(el('span', 'ck-meta', meta));
     line.appendChild(main);
     const chip = el('span', `ck-chip ${st.state}`,
       st.state === 'checking' ? 'CHECKING…' : st.state.toUpperCase());
     line.appendChild(chip);
-    const open = el('button', 'ck-open', 'Chrome ↗');
-    open.title = "Open this account's Chrome";
+    if (loginPendingIds.has(acc.id)) {
+      const done = el('button', 'ck-open', 'Done');
+      done.title = "Confirm this account's login";
+      done.addEventListener('click', async () => {
+        done.disabled = true;
+        done.textContent = 'Checking…';
+        try {
+          const res = await window.api.completeLogin(acc.id);
+          loginPendingIds.delete(acc.id);
+          if (res && res.accounts) renderAccounts(res.accounts);
+          if (res && res.success) setAccountMessage(acc.id, res.message || 'Login confirmed.', false);
+          else setAccountMessage(acc.id, (res && res.error) || 'Login could not be confirmed yet.', true);
+        } catch (err) {
+          setAccountMessage(acc.id, `Login check failed: ${err.message}`, true);
+        }
+        renderAccounts(currentAccounts);
+      });
+      line.appendChild(done);
+    }
+    const open = el('button', 'ck-open', acc.status === 'Need Login' ? 'Sign In' : 'Chrome ↗');
+    open.title = acc.status === 'Need Login' ? "Open this account's sign-in window" : "Open this account's Chrome";
     open.addEventListener('click', async () => {
       open.disabled = true;
       try {
         const res = await window.api.openLoginWindow(acc.id);
-        if (res && res.success === false) showToast(res.error || "Chrome could not be opened.", 'error');
+        if (res && res.success === false) {
+          showToast(res.error || 'Chrome could not be opened.', 'error');
+        } else if (acc.status === 'Need Login') {
+          loginPendingIds.add(acc.id);
+          setAccountMessage(acc.id, 'Chrome is open — sign in there, then press Done on this line.', false);
+          renderAccounts(currentAccounts);
+        }
       } catch (err) { showToast(`Chrome could not be opened: ${err.message}`, 'error'); }
       open.disabled = false;
     });
     line.appendChild(open);
     box.appendChild(line);
+    // Notes live UNDER the line, only when there is something to say.
+    if (acc.status === 'Cooldown' && acc.restUntil) {
+      const till = new Date(acc.restUntil);
+      if (!isNaN(till)) box.appendChild(el('div', 'ck-note', `Resting till ${till.toLocaleString()} — rotation skips this account until then.`));
+    }
+    if (acc.status === 'Unconfirmed') {
+      box.appendChild(el('div', 'ck-note', 'Login unconfirmed — Sync once more to confirm (two-strike rule), or Sign In if this account really is logged out.'));
+    }
+    const msg = accountMessages.get(acc.id);
+    if (msg) box.appendChild(el('div', msg.isError ? 'ck-note error' : 'ck-note', msg.text));
   });
 }
+// Kept as an alias: cookie-check events still call the old name.
+function renderCookieLines() { renderAccountLines(); }
 document.querySelectorAll('#cookie-filter-seg button').forEach(b => {
   b.addEventListener('click', () => { cookieFilter = b.dataset.cfilter; renderCookieLines(); });
 });
@@ -2676,7 +2558,7 @@ if (btnCustomTagAdd) btnCustomTagAdd.addEventListener('click', async () => {
 });
 
 // ---------- Updates box ----------
-const APP_VERSION = '2.12.0';
+const APP_VERSION = '2.13.0';
 function versionNewer(a, b) {
   const pa = String(a || '').replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0);
   const pb = String(b || '').replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0);

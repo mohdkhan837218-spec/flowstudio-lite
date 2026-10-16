@@ -1170,3 +1170,7 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; margin-bottom: 10px;
 .ck-line { gap: 5px; }
 .ck-open { font-size: 10px; padding: 5px 6px; }
 .ck-name { font-size: 11px; }
+
+/* v2.13.0: note rows under a unified account line */
+.ck-note{font-size:10.5px;line-height:1.45;color:var(--muted,#a89f8d);padding:2px 8px 6px 26px}
+.ck-note.error{color:#e08a7a}
