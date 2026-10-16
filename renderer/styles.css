@@ -1241,3 +1241,63 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; margin-bottom: 10px;
   .gen-settings-grid select { font-size: 11.5px; letter-spacing: 0; }
   #tag-select { font-size: 11.5px; }
 }
+
+/* ---------- v2.16 — fluid fit: with the Resume banner showing and
+   a short window (the owner's real working height is ~700px once
+   the title bar and taskbar take their share), the form must give
+   up its slack in ONE place — the prompts textarea flexes — so
+   nothing scrolls and no section is ever pushed out. ---------- */
+@media (max-width: 1149px) and (max-height: 860px) {
+  .gen-form { display: flex; flex-direction: column; }
+  .gen-form > * { flex: none; }
+  .gen-form > #prompts-input { flex: 1 1 auto; min-height: 30px; height: auto; }
+  .resume-banner { padding: 8px 12px; margin-bottom: 8px; font-size: 12.5px; }
+  .resume-banner button { padding: 5px 12px; }
+  /* Micro-cuts: in a flex column the hidden rows' margins still
+     count, and every box margin is real height. Together these
+     return ~105px to the form — more than the banner + the lost
+     window height ever take. */
+  .gen-form > .hint { margin: 0; }
+  .gen-form > .prompt-preview { margin: 0; }
+  .gen-form > .toolbar { margin: 2px 0 6px; }
+  .gen-form > .detect-row { margin: 2px 0 4px; }
+  .gen-form > .seg { margin-bottom: 4px; }
+  .gen-form > .prompts-title-row { margin-bottom: 2px; }
+  .gen-form > #prompts-input { margin-bottom: 4px; }
+  .gen-form > .settings-box { margin-top: 6px; padding: 8px 10px; }
+  .gen-form > .settings-box h4 { margin-bottom: 4px; }
+  .gen-settings-grid { margin-top: 4px; }
+  .gen-form .toolbar button { padding: 5px 10px; }
+  .gen-form .seg-btn { padding: 4px 11px; }
+  #prompt-mode-seg { margin-bottom: 3px; }
+  #prompt-mode-seg .seg-btn { padding: 4px 11px; }
+  .gen-form .settings-box h4 { font-size: 12px; margin-bottom: 2px; }
+  #setting-folder { height: 28px; }
+  .folder-row button { padding: 4px 9px; }
+  .generate-grid .gen-left { padding: 10px 12px; }
+  .activity-panel { padding: 8px 12px; }
+  .zd-mrow { margin-bottom: 4px; }
+  .actions button { padding-top: 6px; padding-bottom: 6px; }
+  /* Labels sit BESIDE their fields at this size instead of above
+     them — each settings box gives back ~25-30px, which is what
+     finally closes the gap: one row of fields stays one row. */
+  .gen-settings-grid label { flex-direction: row; align-items: center; gap: 6px; }
+  .gen-settings-grid label select { flex: 1; min-width: 0; }
+  .folder-line label.grow { display: flex; flex-direction: row; align-items: center; gap: 8px; white-space: nowrap; }
+  .folder-line .folder-row { flex: 1; display: flex; gap: 6px; min-width: 0; }
+  .folder-line .folder-row input { flex: 1; min-width: 0; }
+}
+@media (max-width: 1149px) and (max-height: 740px) {
+  .gen-form > #prompts-input { min-height: 24px; }
+  .zd-stream { max-height: 30px; min-height: 30px; padding: 6px 9px; }
+  .resume-banner { padding: 6px 12px; margin-bottom: 4px; }
+  .top-strip { padding: 4px 10px; }
+  .zd-head { margin-bottom: 0; }
+  #gen-live-note { font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gen-form > #prompts-input { min-height: 18px; }
+  .actions { margin-top: 4px; }
+  .folder-row button { padding: 3px 8px; }
+  #setting-folder { height: 26px; }
+  .gen-form .toolbar button { padding: 4px 9px; font-size: 12px; }
+  .gen-form > .detect-row { margin: 1px 0 2px; }
+}
