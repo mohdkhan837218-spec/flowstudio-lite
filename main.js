@@ -99,8 +99,8 @@ function runLowCreditAlerts() {
         category: 'credits', level: 'warn', accountId: acc.id,
         accountName: acc.googleName || acc.name,
         stage: 'credits',
-        detail: `Is account ka balance 10 credits se neeche aa gaya hai — is par sirf chhote/ek-aadh video hi ban payenge. Credits kal ke daily refresh se bhar sakte hain, ya koi dusra account istemal karo. Ye alert ek account ke liye din me sirf ek baar aata hai.`,
-        message: `Low credits alert: ${acc.googleName || acc.name} — sirf ${acc.credits} credits bache (10 se kam)`
+        detail: `This account's balance has dropped below 10 credits — only short or one-off videos can be made on it. Credits may refill with tomorrow's daily refresh, or use another account. This alert comes only once a day for an account.`,
+        message: `Low credits alert: ${acc.googleName || acc.name} — only ${acc.credits} credits left (under 10)`
       });
     });
   } catch (e) {}
@@ -460,16 +460,16 @@ app.whenReady().then(async () => {
   // the Settings "auto verify on start" toggle (background, never
   // blocking the UI — the Indifference Rule applies to the app too).
   try { getActivityStore().setBroadcaster((entry) => send('activity-update', entry)); } catch (e) {}
-  recordActivity({ category: 'system', level: 'info', message: `FlowStudio Lite v${APP_VERSION} shuru hua` });
+  recordActivity({ category: 'system', level: 'info', message: `FlowStudio Lite v${APP_VERSION} started` });
   setTimeout(() => {
     runLowCreditAlerts();
     try {
       if (dbService.getSetting('auto_verify_start', '0') === '1') {
-        recordActivity({ category: 'system', level: 'info', message: 'Auto-verify (start par) chal raha hai…' });
+        recordActivity({ category: 'system', level: 'info', message: 'Auto-verify (on start) is running…' });
         refreshAllAccountCredits()
           .then(({ summary }) => {
             if (summary) {
-              recordActivity({ category: 'login', level: 'info', stage: 'verify', detail: 'Har account ka live check hua: live = login sahi aur credits hain · low = login sahi, credits kam · exhausted = credits 0 · need-login = do baar sign-out confirm hua · unconfirmed = ek baar sign-out dikha, pakka nahi · unknown = check pura nahi ho paya.', message: `Auto-verify complete: ${summary.live} live · ${summary.low} low · ${summary.exhausted} exhausted · ${summary.needLogin} need-login · ${summary.unconfirmed} unconfirmed · ${summary.unknown} unknown` });
+              recordActivity({ category: 'login', level: 'info', stage: 'verify', detail: 'Every account was live-checked: live = login OK and credits available · low = login OK, credits low · exhausted = credits 0 · need-login = sign-out confirmed twice · unconfirmed = sign-out seen once, not certain · unknown = the check could not complete.', message: `Auto-verify complete: ${summary.live} live · ${summary.low} low · ${summary.exhausted} exhausted · ${summary.needLogin} need-login · ${summary.unconfirmed} unconfirmed · ${summary.unknown} unknown` });
             }
             send('account-updated', { accounts: getAccounts() });
             runLowCreditAlerts();
@@ -545,7 +545,7 @@ ipcMain.handle('delete-account', async (event, id) => {
   assertAccountId(id);
   const before = dbService.getAccount(id);
   const accounts = deleteAccount(id);
-  recordActivity({ category: 'system', level: 'warn', accountId: id, accountName: before ? (before.googleName || before.name) : null, message: `Account hataya gaya: ${before ? (before.googleName || before.name) : id}` });
+  recordActivity({ category: 'system', level: 'warn', accountId: id, accountName: before ? (before.googleName || before.name) : null, message: `Account removed: ${before ? (before.googleName || before.name) : id}` });
   return { success: true, accounts };
 });
 
@@ -579,7 +579,7 @@ ipcMain.handle('sync-all-accounts', async (event) => {
   // summary alongside the refreshed accounts.
   const { accounts, summary } = await refreshAllAccountCredits();
   if (summary) {
-    recordActivity({ category: 'login', level: 'info', stage: 'verify', detail: 'Har account ka live check hua: live = login sahi aur credits hain · low = login sahi, credits kam · exhausted = credits 0 · need-login = do baar sign-out confirm hua · unconfirmed = ek baar sign-out dikha, pakka nahi · unknown = check pura nahi ho paya. Jo check ek baar me pakka nahi hua, use ek baar khud dobara check kiya gaya tha.', message: `Verify All: ${summary.live} live · ${summary.low} low · ${summary.exhausted} exhausted · ${summary.needLogin} need-login · ${summary.unconfirmed} unconfirmed · ${summary.unknown} unknown` });
+    recordActivity({ category: 'login', level: 'info', stage: 'verify', detail: 'Every account was live-checked: live = login OK and credits available · low = login OK, credits low · exhausted = credits 0 · need-login = sign-out confirmed twice · unconfirmed = sign-out seen once, not certain · unknown = the check could not complete. Any check that was not certain in one pass was automatically checked once more.', message: `Verify All: ${summary.live} live · ${summary.low} low · ${summary.exhausted} exhausted · ${summary.needLogin} need-login · ${summary.unconfirmed} unconfirmed · ${summary.unknown} unknown` });
   }
   runLowCreditAlerts();
   return { success: true, accounts, summary };
@@ -856,7 +856,7 @@ ipcMain.handle('start-generation', async (event, config) => {
     try {
       fs.mkdirSync(downloadFolder, { recursive: true });
     } catch (e) {
-      return { success: false, error: `Output folder banaya nahi ja saka (${downloadFolder}): ${e.message}` };
+      return { success: false, error: `Could not create the output folder (${downloadFolder}): ${e.message}` };
     }
   }
   dbService.setSetting('download_folder', downloadFolder);
@@ -923,7 +923,7 @@ ipcMain.handle('retry-task', async (event, taskId) => {
     try {
       fs.mkdirSync(downloadFolder, { recursive: true });
     } catch (e) {
-      return { success: false, error: `Output folder banaya nahi ja saka (${downloadFolder}): ${e.message}` };
+      return { success: false, error: `Could not create the output folder (${downloadFolder}): ${e.message}` };
     }
   }
 
@@ -979,10 +979,10 @@ ipcMain.handle('retry-missing-tasks', async (event, payload) => {
     return { success: false, error: 'A generation run is already in progress. Wait for it to finish, then retry.' };
   }
   const wanted = new Set((payload && Array.isArray(payload.taskIds)) ? payload.taskIds.map(v => String(v || '')).filter(Boolean) : []);
-  if (wanted.size === 0) return { success: false, error: 'Missing tasks ki list khaali hai.' };
+  if (wanted.size === 0) return { success: false, error: 'The list of missing tasks is empty.' };
 
   const { rows, report } = lastRunReport();
-  if (!report) return { success: false, error: 'Is session me abhi koi run nahi hua — pehle Generate chalao.' };
+  if (!report) return { success: false, error: 'No run has happened in this session yet — run Generate first.' };
   // Intersect the renderer's ask with the RECOMPUTED report, by task
   // id — and rebuild each item from its DB row (asal tag + number).
   const byId = new Map(rows.map(r => [String(r.id), r]));
@@ -994,7 +994,7 @@ ipcMain.handle('retry-missing-tasks', async (event, payload) => {
     })
     .filter(i => i && i.text);
   if (queueItems.length === 0) {
-    return { success: false, error: 'Dobara banane ke liye koi missing task nahi bacha (shayad sab ban gaye hain).' };
+    return { success: false, error: 'No missing task is left to regenerate (perhaps all of them are already made).' };
   }
 
   let settings = {};
@@ -1011,7 +1011,7 @@ ipcMain.handle('retry-missing-tasks', async (event, payload) => {
     try {
       fs.mkdirSync(downloadFolder, { recursive: true });
     } catch (e) {
-      return { success: false, error: `Output folder banaya nahi ja saka (${downloadFolder}): ${e.message}` };
+      return { success: false, error: `Could not create the output folder (${downloadFolder}): ${e.message}` };
     }
   }
 
@@ -1022,8 +1022,8 @@ ipcMain.handle('retry-missing-tasks', async (event, payload) => {
   recordActivity({
     category: 'generation', level: 'info',
     stage: 'sequence',
-    detail: `Sequence report ke ${queueItems.length} missing video dobara queue me gaye — sirf yahi prompts banege, unke asal tags ke saath (${queueItems.map(i => i.tag || `scene${String((i.index || 0) + 1).padStart(3, '0')}`).join(', ')}). Jo videos pehle se ban chuke hain unhe haath nahi laga; credits sirf inhi missing par lagenge.`,
-    message: `Sirf Missing Dobara Banao: ${queueItems.length} missing prompt(s) dobara chal rahe hain`
+    detail: `The sequence report's ${queueItems.length} missing videos have been queued again — only these prompts will be generated, with their original tags (${queueItems.map(i => i.tag || `scene${String((i.index || 0) + 1).padStart(3, '0')}`).join(', ')}). Videos that are already made have not been touched; credits will be spent only on these missing ones.`,
+    message: `Regenerate Missing Only: ${queueItems.length} missing prompt(s) are running again`
   });
   return { success: true, totalPrompts: queueItems.length };
 });
@@ -1040,15 +1040,15 @@ ipcMain.handle('rename-task-file', async (event, payload) => {
   await dbService.ensureInit();
   const taskId = String((payload && payload.taskId) || '');
   const task = dbService.getTask(taskId);
-  if (!task) return { success: false, error: 'Task nahi mila.' };
+  if (!task) return { success: false, error: 'Task not found.' };
   if (task.status !== 'completed' || !task.file_path) {
-    return { success: false, error: 'Sirf complete hue task ki file ka naam badla ja sakta hai.' };
+    return { success: false, error: 'Only a completed task\'s file can be renamed.' };
   }
   const tag = (task.prompt_tag || '').trim();
   const canonical = tag ? fileNameForTag(tag, path.extname(task.file_path).replace(/^\./, '') || 'mp4') : null;
-  if (!canonical) return { success: false, error: 'Is task par koi tag nahi hai — tag-naam nahi ban sakta.' };
+  if (!canonical) return { success: false, error: 'This task has no tag — a tag name cannot be made.' };
   if (path.basename(task.file_path) === canonical) {
-    return { success: false, error: 'File pehle se hi sahi tag-naam par hai.' };
+    return { success: false, error: 'The file is already on the correct tag name.' };
   }
   const mediaRoots = [getDefaultDownloadFolder(), path.join(os.homedir(), 'Downloads'), dbService.getDataDir()];
   let source;
@@ -1057,10 +1057,10 @@ ipcMain.handle('rename-task-file', async (event, payload) => {
   } catch (e) {
     return { success: false, error: e.message };
   }
-  if (!fs.existsSync(source)) return { success: false, error: 'File disk par nahi mili — pehle History/Report refresh karo.' };
+  if (!fs.existsSync(source)) return { success: false, error: 'File not found on disk — refresh History/Report first.' };
   const target = path.join(path.dirname(source), canonical);
   if (fs.existsSync(target)) {
-    return { success: false, error: `"${canonical}" naam ki file pehle se maujood hai — use overwrite nahi kiya jayega. Pehle usey kahin aur move karo.` };
+    return { success: false, error: `A file named "${canonical}" already exists — it will not be overwritten. Move it somewhere else first.` };
   }
   try {
     try {
@@ -1070,7 +1070,7 @@ ipcMain.handle('rename-task-file', async (event, payload) => {
       fs.unlinkSync(source);
     }
   } catch (e) {
-    return { success: false, error: `Rename nahi ho paya: ${e.message}` };
+    return { success: false, error: `Rename failed: ${e.message}` };
   }
   dbService.updateTaskFile(taskId, target, canonical);
   try { dbService.persistNow(); } catch (e) {}
@@ -1078,8 +1078,8 @@ ipcMain.handle('rename-task-file', async (event, payload) => {
     category: 'system', level: 'info',
     stage: 'sequence',
     taskId,
-    detail: `Ek video galat naam se save ho gaya tha ("${path.basename(source)}") — sequence report se use uske tag ke sahi naam "${canonical}" par rename kar diya gaya hai (file bhi, app ka record bhi). Koi file overwrite nahi hui.`,
-    message: `Galat naam theek hua: ${path.basename(source)} → ${canonical} (Tag ${tag})`
+    detail: `One video had been saved under a wrong name ("${path.basename(source)}") — from the sequence report it has been renamed to its tag's correct name "${canonical}" (both the file and the app record). No file was overwritten.`,
+    message: `Wrong name fixed: ${path.basename(source)} → ${canonical} (Tag ${tag})`
   });
   return { success: true, fileName: canonical, filePath: target };
 });
@@ -1105,7 +1105,7 @@ ipcMain.handle('delete-history-tasks', async (event, payload) => {
   await dbService.ensureInit();
   const ids = (payload && Array.isArray(payload.ids)) ? payload.ids.map(v => String(v || '')).filter(Boolean).slice(0, 500) : [];
   const deleteFiles = !!(payload && payload.deleteFiles);
-  if (ids.length === 0) return { success: false, error: 'Kuch select nahi hua — pehle table me videos select karo.' };
+  if (ids.length === 0) return { success: false, error: 'Nothing is selected — select videos in the table first.' };
 
   const mediaRoots = [getDefaultDownloadFolder(), path.join(os.homedir(), 'Downloads'), dbService.getDataDir ? dbService.getDataDir() : path.join(__dirname, 'data')];
   const skippedFiles = [];
@@ -1128,9 +1128,9 @@ ipcMain.handle('delete-history-tasks', async (event, payload) => {
     category: 'system', level: 'warn',
     stage: 'history',
     detail: deleteFiles
-      ? `History table se ${deleted} record delete hue aur unki ${filesDeleted} video file(s) bhi disk se delete kar di gayin.${skippedFiles.length ? ` ${skippedFiles.length} file(s) allowed folder ke bahar thi ya delete nahi ho payi: ${skippedFiles.slice(0, 5).join(', ')}` : ''}`
-      : `History table se ${deleted} record delete hue (files disk par hi hain).`,
-    message: `History: ${deleted} selected record delete hue${deleteFiles ? ` · ${filesDeleted} file(s) bhi delete` : ''}`
+      ? `Deleted ${deleted} records from the History table, and their ${filesDeleted} video file(s) were also deleted from disk.${skippedFiles.length ? ` ${skippedFiles.length} file(s) were outside the allowed folder or could not be deleted: ${skippedFiles.slice(0, 5).join(', ')}` : ''}`
+      : `Deleted ${deleted} records from the History table (the files stay on disk).`,
+    message: `History: ${deleted} selected records deleted${deleteFiles ? ` · ${filesDeleted} file(s) also deleted` : ''}`
   });
   return { success: true, deleted, filesDeleted, skippedFiles };
 });
@@ -1164,7 +1164,7 @@ ipcMain.handle('resume-tasks', async (event) => {
     try {
       fs.mkdirSync(downloadFolder, { recursive: true });
     } catch (e) {
-      return { success: false, error: `Output folder banaya nahi ja saka (${downloadFolder}): ${e.message}` };
+      return { success: false, error: `Could not create the output folder (${downloadFolder}): ${e.message}` };
     }
   }
   const concurrency = validateNumericSetting(dbService.getSetting('concurrency', '3'), 1, 5, 3);
@@ -1216,7 +1216,7 @@ ipcMain.handle('preview-video', async (event, taskId) => {
   await dbService.ensureInit();
   const task = dbService.getTask(String(taskId || ''));
   if (!task || !task.file_path) {
-    return { success: false, error: 'Is task par koi video file nahi mili.' };
+    return { success: false, error: 'No video file was found for this task.' };
   }
   let resolved;
   try {
@@ -1229,7 +1229,7 @@ ipcMain.handle('preview-video', async (event, taskId) => {
     return { success: false, error: e.message };
   }
   if (!fs.existsSync(resolved)) {
-    return { success: false, error: 'Video file disk par nahi mili — shayad delete ya move ho gayi hai.' };
+    return { success: false, error: 'The video file was not found on disk — it may have been deleted or moved.' };
   }
   try {
     if (previewWindow && !previewWindow.isDestroyed()) previewWindow.close();
@@ -1277,7 +1277,7 @@ ipcMain.handle('import-prompts-file', async (event) => {
     const text = fs.readFileSync(result.filePaths[0], 'utf8');
     return { success: true, text, fileName: path.basename(result.filePaths[0]) };
   } catch (e) {
-    return { success: false, error: `File padhi nahi ja saki: ${e.message}` };
+    return { success: false, error: `Could not read the file: ${e.message}` };
   }
 });
 

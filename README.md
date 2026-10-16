@@ -6,6 +6,13 @@ Built as a clean rewrite of FlowStudio V2, keeping its proven Google Flow page a
 
 ---
 
+## What's new in v2.14.0
+
+- **Bug fix:** the "Parallel browsers / Mode / Live available / Running now" note line under the video settings now always matches the Parallel Browsers select — it updates the moment the selection changes, instead of keeping a stale number from before.
+- **Pure English UI, everywhere:** every Activity-stream message, toast and dialog in the app is now plain English — including the engine's generation/download logs, cookie-check results, failover and recovery messages. Cookie/login failure notes on the account lines are also shorter now (one compact line), so a failed account no longer buries the sidebar in wrapped red text.
+
+---
+
 ## Install (Windows PC)
 
 1. Install **Node.js 18+** (https://nodejs.org) and **Google Chrome**.
