@@ -1206,3 +1206,38 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; margin-bottom: 10px;
   .actions { margin-top: 5px; }
   .actions > button { padding-top: 5px; padding-bottom: 5px; }
 }
+
+/* Import grid — approved Design-1-final cards */
+.profile-add-card { border: 1.5px dashed var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; cursor: pointer; min-height: 108px; }
+.profile-add-card:hover { border-color: var(--accent); }
+.already-badge { font-size: 10.5px; font-weight: 800; letter-spacing: .4px; color: var(--green); background: var(--green-bg); border-radius: 12px; padding: 4px 9px; align-self: center; }
+
+/* ---------- v2.15 — 1024x768 fit tier (the owner's monitor): the
+   whole interface steps down a size so EVERYTHING fits on one
+   screen; nothing wraps out of place; the only scrolling left is
+   inside the prompts box and the cookie lines. ---------- */
+@media (max-width: 1149px) and (max-height: 860px) {
+  .sidebar { width: 264px; padding: 10px; }
+  .ck-linebox { padding: 5px; }
+  .gen-settings-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 8px 0 0; }
+  .gen-settings-grid label { font-size: 10.5px; gap: 3px; }
+  .gen-settings-grid select { height: 30px; font-size: 12px; padding: 0 5px; }
+  .ck-line { flex-wrap: nowrap; gap: 6px; padding: 6px 7px; }
+  .ck-name { font-size: 11.5px; }
+  .ck-meta { font-size: 10.5px; }
+  .ck-chip { font-size: 8.5px; padding: 2px 5px; letter-spacing: 0; }
+  .ck-line { gap: 5px; }
+  /* At this size the Chrome button becomes an arrow icon so the
+     account name keeps its room on the same single line. */
+  .ck-open { font-size: 0; padding: 5px 8px; }
+  .ck-open::after { content: "↗"; font-size: 13px; font-weight: 800; }
+  .side-subbox .accounts-action-grid button { font-size: 10.5px; padding: 4px 3px; }
+  #tag-select { max-width: 118px; }
+  .tag-pick { min-width: 0; }
+  .prompts-title-row { gap: 8px; }
+}
+@media (max-width: 1149px) and (max-height: 860px) {
+  .settings-scroll .panel { padding: 12px 14px; margin-bottom: 10px; }
+  .gen-settings-grid select { font-size: 11.5px; letter-spacing: 0; }
+  #tag-select { font-size: 11.5px; }
+}

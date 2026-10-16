@@ -792,6 +792,16 @@ async function loadChromeProfiles() {
     return;
   }
   chromeProfilesList.innerHTML = '';
+  // Approved Design-1-final: the grid starts with a dashed
+  // "+ Add Account" card (direct Gmail login), and a profile whose
+  // Gmail is already an account shows ALREADY IMPORTED with its
+  // credits and a Sync button — never a second Import button, so
+  // no account is ever imported twice.
+  const addCard = el('div', 'card profile-add-card');
+  addCard.appendChild(el('h3', '', '+ Add Account'));
+  addCard.appendChild(el('div', 'email', 'Sign in directly with any Gmail ID'));
+  addCard.addEventListener('click', () => gmailLoginFlow());
+  chromeProfilesList.appendChild(addCard);
   if (!profiles || profiles.length === 0) {
     chromeProfilesList.appendChild(el('div', 'empty', 'No installed Chrome profiles detected.'));
     return;
@@ -801,6 +811,24 @@ async function loadChromeProfiles() {
     card.appendChild(el('h3', '', p.gaiaName || p.name || p.dirName));
     card.appendChild(el('div', 'email', p.email || p.dirName));
     const actions = el('div', 'btn-row');
+    const existing = p.email ? currentAccounts.find(a => a.email && a.email.toLowerCase() === p.email.toLowerCase()) : null;
+    if (existing) {
+      card.appendChild(el('div', 'email', typeof existing.credits === 'number' ? `${existing.credits} credits` : 'Credits not checked yet'));
+      actions.appendChild(el('span', 'already-badge', 'ALREADY IMPORTED'));
+      const syncBtn = el('button', '', 'Sync');
+      syncBtn.addEventListener('click', async () => {
+        syncBtn.disabled = true;
+        syncBtn.textContent = 'Syncing…';
+        try { await window.api.syncAccount(existing.id); } catch (e) {}
+        syncBtn.disabled = false;
+        syncBtn.textContent = 'Sync';
+        loadChromeProfiles();
+      });
+      actions.appendChild(syncBtn);
+      card.appendChild(actions);
+      chromeProfilesList.appendChild(card);
+      continue;
+    }
     const importBtn = el('button', '', 'Import this profile');
     importBtn.addEventListener('click', async () => {
       importBtn.disabled = true;
@@ -2084,7 +2112,7 @@ async function renderAbout() {
     const box = document.getElementById('about-box');
     box.innerHTML = '';
     const lines = [
-      ['Version', 'FlowStudio Lite v2.14.0'],
+      ['Version', 'FlowStudio Lite v2.15.0'],
       ['Accounts', String(currentAccounts.length)],
       ['Total videos saved', stats ? String(stats.total) : '—'],
       ['Design', 'Warm Premium (Dark) + White appearance — change it above']
@@ -2560,7 +2588,7 @@ if (btnCustomTagAdd) btnCustomTagAdd.addEventListener('click', async () => {
 });
 
 // ---------- Updates box ----------
-const APP_VERSION = '2.14.0';
+const APP_VERSION = '2.15.0';
 function versionNewer(a, b) {
   const pa = String(a || '').replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0);
   const pb = String(b || '').replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0);
