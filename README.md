@@ -6,6 +6,10 @@ Built as a clean rewrite of FlowStudio V2, keeping its proven Google Flow page a
 
 ---
 
+## What's new in v2.16.0
+
+- **Fluid fit for short windows:** on the owner's 1024x768 screen the app's real working height is about 700px (title bar + taskbar), and the Resume Queue banner takes another row. The Generate form now flexes in exactly one place — the prompts textarea grows or shrinks to fill whatever height is available — settings labels sit beside their fields, and hidden rows no longer eat margins. Verified by DOM probe at 1024x700 WITH the banner showing and at 1024x768: zero scrolling anywhere except inside the prompts box and the cookie lines, exactly as specified.
+
 ## What's new in v2.15.0
 
 - **Fits a 1024x768 screen** (the owner's monitor): on smaller windows the whole interface steps down a size — the Generate page shows everything on one screen with no scrolling in the middle column; only the prompts box and the cookie lines scroll, inside their own boxes. Video Settings stays one row of four fields, the Output box is fully visible, and account names stay readable on their lines (the Chrome button becomes an arrow icon at this size so the name keeps its room).
