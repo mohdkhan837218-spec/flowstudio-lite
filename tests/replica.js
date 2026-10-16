@@ -435,8 +435,8 @@ function assert(cond, msg) {
       }, 8000);
       await monitorPromise;
       assert(events.completed.length === 1, 'narration: the generating tile completed normally');
-      assert(logs.some(l => l.includes('ban raha hai')), 'narration: the log said the video is being made');
-      assert(logs.filter(l => l.includes('ban raha hai') && /\d+ s ka intezaar/.test(l)).length >= 2, 'narration: the state line REPEATED with elapsed time while rendering (heartbeat — no silence)');
+      assert(logs.some(l => l.includes('The video is generating on Flow')), 'narration: the log said the video is being made');
+      assert(logs.filter(l => l.includes('The video is generating on Flow') && /total wait/.test(l)).length >= 2, 'narration: the state line REPEATED with elapsed time while rendering (heartbeat — no silence)');
       assert(events.heartbeats.includes('generating'), 'narration: Activity heartbeat saw the generating state');
     }
     {
@@ -467,7 +467,7 @@ function assert(cond, msg) {
       const elapsedSec = (Date.now() - t0) / 1000;
       assert(events.failed.length === 1 && /Safety|Policy/.test(events.failed[0] || ''), `fast fail: a Flow-failed tile fails with the policy reason (got: ${events.failed[0]})`);
       assert(elapsedSec < 25, `fast fail: no long wait — failed in ${elapsedSec.toFixed(1)}s despite a 120s recovery window`);
-      assert(logs.some(l => l.includes('fail dikhaya')), 'fast fail: the log narrated the failure the moment the tile showed it');
+      assert(logs.some(l => l.includes('Flow has marked this video as failed')), 'fast fail: the log narrated the failure the moment the tile showed it');
     }
 
     // 14. v2.6.0 RENDER PROGRESS WATCHDOG (the owner's v2.5.0 freeze):
@@ -525,7 +525,7 @@ function assert(cond, msg) {
       assert(events.stalls[0] && events.stalls[0].lastPct === '1%', `watchdog: the stall report carries the frozen percentage (got ${events.stalls[0] && events.stalls[0].lastPct})`);
       assert(events.failed.length === 0, `watchdog: a frozen % never fails the task by itself (failures: ${JSON.stringify(events.failed)})`);
       assert(events.completed.length === 1 && task.downloaded === true, 'watchdog: once the render finished, the task completed normally');
-      assert(events.logs.some(l => l.includes('Render ATKA')), 'watchdog: the freeze was narrated in the log in plain words');
+      assert(events.logs.some(l => l.includes('The render seems STUCK')), 'watchdog: the freeze was narrated in the log in plain words');
     }
 
     // 15. DOWNLOAD STRATEGIES (v2.8.0 roop) — Flow-grid ke teen
@@ -630,7 +630,7 @@ function assert(cond, msg) {
             { route: '/grid-editor', strategy: 'native-editor', label: 'editor top-bar ("Download media") wala roop' },
             { route: '/grid-menu-icon', strategy: 'native-menu', label: 'v2.10.0 menu-icon wala roop (ligature text ke saath "Download")' },
             { route: '/grid-editor-strip', strategy: 'native-editor', label: 'v2.10.0 editor-strip wala roop (grid DOM maujood, URL /edit/)' },
-            { route: '/grid-pagefetch', strategy: 'tile-src', label: 'v2.10.0 in-page fetch wala roop (Node fetch fail, browser fetch jeet)', logExpect: 'Browser ke andar wale fetch' }
+            { route: '/grid-pagefetch', strategy: 'tile-src', label: 'v2.10.0 in-page fetch wala roop (Node fetch fail, browser fetch jeet)', logExpect: 'in-browser fetch' }
           ];
           for (const shape of shapes) {
             const dlDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fsl-replica-out-'));
@@ -741,11 +741,11 @@ function assert(cond, msg) {
       assert(events.failed.length === 1 && events.failed[0].stage === 'download',
         `download-fail: failure stage 'download' ke saath aaya (got ${JSON.stringify(events.failed)})`);
       assert(/^Download failed/.test(events.failed[0].reason || ''), 'download-fail: wajah "Download failed" se shuru hoti hai');
-      assert(!logs.some(l => l.includes('download bhi ho gaye!')), 'jhooti success line NAHI aayi (ek bhi file save nahi hui thi)');
-      assert(logs.some(l => /0 video download hue, 1 fail hue \(stage: download\)/.test(l)), 'sach wali settle line aayi: 0 download hue, 1 fail (stage: download)');
+      assert(!logs.some(l => l.includes('Download complete')), 'jhooti success line NAHI aayi (ek bhi file save nahi hui thi)');
+      assert(logs.some(l => /0 videos were downloaded, 1 failed \(stage: download\)/.test(l)), 'sach wali settle line aayi: 0 download hue, 1 fail (stage: download)');
       assert(!logs.some(l => /Video ban raha hai: \d+%/.test(l)), 'progress ki do-foldi awaaz NAHI (purani % wali log line band)');
-      assert(logs.some(l => l.includes('ban raha hai — 50%')), 'progress ki EK awaaz (tileState narration) maujood hai');
-      assert(logs.some(l => l.includes('koi media URL nahi mila')), 'stream raste ki khamoshi khatam — URL na milne ki wajah log hui');
+      assert(logs.some(l => l.includes('generating on Flow — 50% done')), 'progress ki EK awaaz (tileState narration) maujood hai');
+      assert(logs.some(l => l.includes('No media URL of this task was found')), 'stream raste ki khamoshi khatam — URL na milne ki wajah log hui');
     }
 
     // 17. v2.8.0 BACKEND NETWORK CAPTURE — nakli Flow backend asal

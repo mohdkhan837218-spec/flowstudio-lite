@@ -1422,7 +1422,7 @@ console.log('\n[4] FFmpeg getVideoDimensions fix');
       assert.strictEqual(out.check.state, 'fail');
     }
     // The v2.1.0 unconfirmed wording reflects the automatic second look.
-    assert.ok(/Do baar/.test(cookieCheckState('unconfirmed', {}, {}).reason), 'unconfirmed reason says the check ran twice');
+    assert.ok(/two checks/.test(cookieCheckState('unconfirmed', {}, {}).reason), 'unconfirmed reason says the check ran twice');
   });
 
   test('activity v2.1.0: detail/stage/reason/task fields stored; copy format carries the full story', () => {
@@ -1448,7 +1448,7 @@ console.log('\n[4] FFmpeg getVideoDimensions fix');
     assert.ok(copy.includes('Prompt #: 2'), 'copy carries the 1-based prompt number');
     assert.ok(copy.includes('Stage: render-wait'), 'copy carries the stage (kahan ruka)');
     assert.ok(copy.includes('Detail: Credits kat gaye the'), 'copy carries the detail (kya hua)');
-    assert.ok(copy.includes('Wajah (reason): Generation tile'), 'copy carries the reason (kyun hua)');
+    assert.ok(copy.includes('Reason: Generation tile'), 'copy carries the reason (kyun hua)');
     const legacy = entries.find(e => !e.taskId);
     assert.ok(!formatEntryForCopy(legacy).includes('Detail:'), 'older entries copy whatever they have — no invented detail');
     const all = formatEntriesForCopy(entries);
@@ -1666,7 +1666,7 @@ console.log('\n[4] FFmpeg getVideoDimensions fix');
     const rich = { time: '07:12 PM', level: 'error', message: 'Cookie check FAIL', accountName: 'Acc 1', stage: 'cookie-check', reason: 'session dead' };
     const line = formatEntryDetailLine(rich);
     assert.ok(line.startsWith('[07:12 PM] ✘ Cookie check FAIL — '), 'details line keeps the simple head');
-    assert.ok(line.includes('Account: Acc 1') && line.includes('Stage: cookie-check') && line.includes('Wajah: session dead'));
+    assert.ok(line.includes('Account: Acc 1') && line.includes('Stage: cookie-check') && line.includes('Reason: session dead'));
     assert.strictEqual(formatEntrySimple(null), '');
   });
 
@@ -1781,14 +1781,14 @@ console.log('\n[4] FFmpeg getVideoDimensions fix');
     const html = fs.readFileSync(path.join(ROOT, 'renderer', 'index.html'), 'utf8');
     for (const id of ['view-import', 'history-tbody', 'history-search', 'history-folder-filter', 'btn-delete-selected',
       'history-check-all', 'activity-mode-seg', 'btn-clear-log', 'cookie-modal-overlay', 'cookie-paste-text',
-      'setting-browser-bg', 'pref-browser-bg', 'modal-input2']) {
+      'pref-browser-bg', 'modal-input2']) {
       assert.ok(html.includes(`id="${id}"`), `index.html carries #${id}`);
     }
     assert.ok(html.includes('data-view="import"'), 'nav has the Import tab');
-    assert.ok(html.includes('id="strip-version">v2.13.0</span>'), 'strip badge is v2.13.0');
+    assert.ok(html.includes('id="strip-version">v2.14.0</span>'), 'strip badge is v2.14.0');
     assert.ok(!html.includes('id="history-list"'), 'the old card-style history list is gone (table now)');
     const appSrc = fs.readFileSync(path.join(ROOT, 'renderer', 'app.js'), 'utf8');
-    assert.ok(appSrc.includes('FlowStudio Lite v2.13.0'), 'About box is v2.13.0');
+    assert.ok(appSrc.includes('FlowStudio Lite v2.14.0'), 'About box is v2.14.0');
     assert.ok(appSrc.includes('importCookieText'), 'paste path wired in the renderer');
     assert.ok(appSrc.includes('Chrome ↗'), 'account cards carry the Chrome ↗ button');
     const css = fs.readFileSync(path.join(ROOT, 'renderer', 'styles.css'), 'utf8');
@@ -1802,7 +1802,7 @@ console.log('\n[4] FFmpeg getVideoDimensions fix');
     const preloadSrc = fs.readFileSync(path.join(ROOT, 'preload.js'), 'utf8');
     assert.ok(/addAccount: \(name, email\) => ipcRenderer\.invoke\('add-account', \{ name/.test(preloadSrc), 'add-account IPC shape is {name, email}');
     const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-    assert.strictEqual(pkg.version, '2.13.0');
+    assert.strictEqual(pkg.version, '2.14.0');
   });
 
   console.log('\n[18] v2.3.0: smart parser, tag naming, sequence integrity, retry-missing');
@@ -2123,7 +2123,7 @@ console.log('\n[4] FFmpeg getVideoDimensions fix');
       assert.ok(preloadSrc.includes(api), `preload exposes ${api}`);
     }
     const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-    assert.strictEqual(pkg.version, '2.13.0');
+    assert.strictEqual(pkg.version, '2.14.0');
   });
 
   console.log('\n[19] v2.4.0: short-prompt binding, tile states, heartbeat, duplicate guard, log hygiene, outputs lock, background plan, account rows');
@@ -2137,23 +2137,23 @@ console.log('\n[4] FFmpeg getVideoDimensions fix');
     assert.strictEqual(ts.classifyTaskTile({ tile: null, anyGenerating: true }), 'absent-active');
     assert.strictEqual(ts.classifyTaskTile({ tile: null, anyGenerating: false }), 'absent');
     // The plain lines the owner reads:
-    assert.ok(ts.describeState('generating', { promptIndex: 0, elapsedSec: 75, percentage: '50%' }).includes('ban raha hai'), 'generating line is plain');
+    assert.ok(ts.describeState('generating', { promptIndex: 0, elapsedSec: 75, percentage: '50%' }).includes('generating on Flow'), 'generating line is plain');
     assert.ok(ts.describeState('generating', { promptIndex: 0, elapsedSec: 75 }).includes('1 min 15 s'), 'elapsed is narrated');
-    assert.ok(ts.describeState('failed', { promptIndex: 2, elapsedSec: 9 }).includes('fail dikhaya'), 'failed line is immediate, no long wait promised');
-    assert.ok(ts.describeState('absent', { promptIndex: 0, elapsedSec: 65 }).includes('koi tile nahi banayi'), 'absent line names the likely cause');
-    assert.ok(ts.describeState('absent-active', { promptIndex: 0, elapsedSec: 65 }).includes('kuch ban raha hai'), 'absent-active line is distinct');
+    assert.ok(ts.describeState('failed', { promptIndex: 2, elapsedSec: 9 }).includes('marked this video as failed'), 'failed line is immediate, no long wait promised');
+    assert.ok(ts.describeState('absent', { promptIndex: 0, elapsedSec: 65 }).includes('has not created any tile'), 'absent line names the likely cause');
+    assert.ok(ts.describeState('absent-active', { promptIndex: 0, elapsedSec: 65 }).includes('something is generating on Flow'), 'absent-active line is distinct');
   });
 
   test('plainError: raw JS errors become plain lines, raw text preserved separately', () => {
     const pe = require(path.join(ROOT, 'engine', 'plainError'));
     const t1 = pe.translateError(new Error("Cannot read properties of null (reading 'evaluate')"));
     assert.strictEqual(t1.known, true);
-    assert.ok(t1.plain.includes('page beech me band'), "the owner's exact leaked error is translated");
+    assert.ok(t1.plain.includes('page closed or changed midway'), "the owner's exact leaked error is translated");
     assert.ok(t1.raw.includes("reading 'evaluate'"), 'raw text is preserved for copy/details');
     assert.ok(!/Cannot read properties/.test(t1.plain), 'plain line never carries the raw wording');
-    assert.ok(pe.translateError('Target closed').plain.includes('Chrome window beech me band'));
-    assert.ok(pe.translateError('Waiting for selector ".ProseMirror" failed').plain.includes('poori tarah load nahi hua'));
-    assert.ok(pe.translateError('Navigation timeout of 30000 ms exceeded').plain.includes('atak gaya'));
+    assert.ok(pe.translateError('Target closed').plain.includes('Chrome window closed midway'));
+    assert.ok(pe.translateError('Waiting for selector ".ProseMirror" failed').plain.includes('did not load fully'));
+    assert.ok(pe.translateError('Navigation timeout of 30000 ms exceeded').plain.includes('got stuck while opening'));
     const t5 = pe.translateError('some brand new internal fault xyz');
     assert.strictEqual(t5.known, false);
     assert.strictEqual(t5.plain, pe.GENERIC_PLAIN, 'unknown errors get the honest generic line');
@@ -2208,11 +2208,11 @@ console.log('\n[4] FFmpeg getVideoDimensions fix');
     assert.strictEqual(lines.length, 0, 'engine pause/resume/stop emit NO log lines (the pool owns those announcements)');
     const fa = fs.readFileSync(path.join(ROOT, 'engine', 'flowAutomation.js'), 'utf8');
     assert.ok(!fa.includes('Queue rok di gayi hai (PAUSED)'), 'old engine pause line removed');
-    assert.ok(!fa.includes('Queue dobara shuru ho gayi hai (RESUMED)'), 'old engine resume line removed');
+    assert.ok(!fa.includes('The queue has started again (RESUMED).'), 'old engine resume line removed');
     const wp = fs.readFileSync(path.join(ROOT, 'engine', 'workerPool.js'), 'utf8');
-    assert.strictEqual((wp.match(/Saari queue rok di gayi hai \(PAUSED\)/g) || []).length, 1, 'exactly one pool pause line exists');
-    assert.strictEqual((wp.match(/Queue dobara shuru ho gayi hai \(RESUMED\)/g) || []).length, 1, 'exactly one pool resume line exists');
-    assert.strictEqual((wp.match(/Queue band kar di gayi hai \(STOPPED\)/g) || []).length, 1, 'exactly one pool stop line exists');
+    assert.strictEqual((wp.match(/The whole queue has been stopped \(PAUSED\)/g) || []).length, 1, 'exactly one pool pause line exists');
+    assert.strictEqual((wp.match(/The queue has started again \(RESUMED\)\./g) || []).length, 1, 'exactly one pool resume line exists');
+    assert.strictEqual((wp.match(/The queue has been closed \(STOPPED\)/g) || []).length, 1, 'exactly one pool stop line exists');
   });
 
   test('v2.4.0 structure: duplicate guard IPC, account rows, heartbeat + state wiring, version sync', () => {
@@ -2228,13 +2228,13 @@ console.log('\n[4] FFmpeg getVideoDimensions fix');
     const appSrc = fs.readFileSync(path.join(ROOT, 'renderer', 'app.js'), 'utf8');
     assert.ok(appSrc.includes('checkPromptDuplicates'), 'renderer runs the guard before Generate');
     assert.ok(appSrc.includes('startResumeFlow'), 'the guard can route to Resume');
-    assert.ok(appSrc.includes('Resume karo (sahi tareeka)'), 'Resume is the modal\u2019s primary (safe) choice');
-    assert.ok(appSrc.includes('renderAccountLines') && appSrc.includes('ck-line'), 'accounts render as unified sidebar lines (v2.13.0)');
+    assert.ok(appSrc.includes('Resume instead (recommended)'), 'Resume is the modal\u2019s primary (safe) choice');
+    assert.ok(appSrc.includes('renderAccountLines') && appSrc.includes('ck-line'), 'accounts render as unified sidebar lines (v2.14.0)');
     assert.ok(appSrc.includes('taskStartTimes'), 'generating rows carry a live elapsed clock');
     const html = fs.readFileSync(path.join(ROOT, 'renderer', 'index.html'), 'utf8');
-    assert.ok(html.includes('id="cookie-lines"'), 'the unified lines box is the accounts container (v2.13.0)');
-    assert.ok(!html.includes('id="accounts-list"'), 'old accounts cards list GAYA (v2.13.0)');
-    assert.ok(html.includes('id="strip-version">v2.13.0</span>'), 'strip badge is v2.13.0');
+    assert.ok(html.includes('id="cookie-lines"'), 'the unified lines box is the accounts container (v2.14.0)');
+    assert.ok(!html.includes('id="accounts-list"'), 'old accounts cards list GAYA (v2.14.0)');
+    assert.ok(html.includes('id="strip-version">v2.14.0</span>'), 'strip badge is v2.14.0');
     const css = fs.readFileSync(path.join(ROOT, 'renderer', 'styles.css'), 'utf8');
     assert.ok(css.includes('.account-row'), 'row styles exist');
     const fa = fs.readFileSync(path.join(ROOT, 'engine', 'flowAutomation.js'), 'utf8');
@@ -2245,7 +2245,7 @@ console.log('\n[4] FFmpeg getVideoDimensions fix');
     const wp = fs.readFileSync(path.join(ROOT, 'engine', 'workerPool.js'), 'utf8');
     assert.ok(wp.includes('onTaskHeartbeat'), 'the pool turns state changes into Activity entries');
     const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-    assert.strictEqual(pkg.version, '2.13.0');
+    assert.strictEqual(pkg.version, '2.14.0');
   });
 
   console.log('\n[20] v2.5.0: prompt-entry root cause pin, accounts box, live-only selection, settings concurrency');
@@ -2268,12 +2268,12 @@ console.log('\n[4] FFmpeg getVideoDimensions fix');
       'btn-accounts-delete-selected', 'btn-accounts-clear-selection', 'accounts-status-line', 'accounts-live-only', 'gen-live-note']) {
       assert.ok(html.includes(`id="${id}"`), `index.html carries #${id}`);
     }
-    // v2.13.0: the old accounts filter tabs are GONE — the status
+    // v2.14.0: the old accounts filter tabs are GONE — the status
     // buttons above the unified lines (All/Checking/Live/Fail) are
     // the only filter now.
-    assert.ok(!html.includes('id="account-filter-seg"'), 'purana accounts filter seg GAYA (v2.13.0)');
-    assert.ok(!html.includes('id="accounts-nomatch"'), 'accounts-nomatch GAYA (v2.13.0)');
-    assert.ok(!html.includes('data-filter="ready"'), 'purane filter tabs GAYA (v2.13.0)');
+    assert.ok(!html.includes('id="account-filter-seg"'), 'purana accounts filter seg GAYA (v2.14.0)');
+    assert.ok(!html.includes('id="accounts-nomatch"'), 'accounts-nomatch GAYA (v2.14.0)');
+    assert.ok(!html.includes('data-filter="ready"'), 'purane filter tabs GAYA (v2.14.0)');
     assert.ok(!html.includes('id="setting-concurrency"'), 'Generate se workers select GAYA (Settings-only ab)');
     assert.ok(!html.includes('workers-box'), 'Generate se gold workers box GAYA');
     assert.ok(!html.includes('Accounts khud rotate hote hain'), 'faltu samjhane wala paragraph GAYA');
@@ -2282,7 +2282,7 @@ console.log('\n[4] FFmpeg getVideoDimensions fix');
     assert.ok(mainSrc.includes("live_only_accounts"), 'createPool live-only setting padhta hai');
     assert.ok(mainSrc.includes('FLOW_LITE_UI_TEST'), 'the prompt-entry boot UI hook lives in main (run: npm run test:ui)');
     const appSrc = fs.readFileSync(path.join(ROOT, 'renderer', 'app.js'), 'utf8');
-    assert.ok(appSrc.includes('lineMatchesFilter'), 'renderer filter predicate wired hai (v2.13.0: unified line filter)');
+    assert.ok(appSrc.includes('lineMatchesFilter'), 'renderer filter predicate wired hai (v2.14.0: unified line filter)');
     assert.ok(appSrc.includes('selectedAccounts'), 'renderer tick-selection wired hai');
     assert.ok(appSrc.includes('readSavedConcurrency'), 'Generate run saved concurrency padhta hai');
   });
@@ -2361,7 +2361,7 @@ console.log('\n[4] FFmpeg getVideoDimensions fix');
     assert.strictEqual(watch.observeProgress(task3, { state: 'generating', percentage: '5%', now: 100001 + 179000 }).type, 'none', 'state badalne ke baad ghadi nayi banti hai');
     // Queue-hint shabdkosh:
     assert.strictEqual(watch.queueHintFromText('a calm meadow at dawn'), null);
-    assert.ok(/bheed/.test(watch.queueHintFromText('High demand right now') || ''));
+    assert.ok(/high-demand/.test(watch.queueHintFromText('High demand right now') || ''));
     assert.strictEqual(watch.DEFAULT_STALL_AFTER_MS, 180000, 'production budget 3 minute hai');
   });
 
@@ -2371,11 +2371,11 @@ console.log('\n[4] FFmpeg getVideoDimensions fix');
     // "Running (2/4)" dikhata tha jahan 4 burst ki seema thi.
     assert.strictEqual(
       WorkerPool.buildRunStatusText({ total: 2, active: 2, done: 0, failed: 0 }),
-      'Chal raha hai — 2 ban rahe hain · 0 poore · kul 2 prompts'
+      'Running — 2 generating · 0 complete · total 2 prompts'
     );
     assert.strictEqual(
       WorkerPool.buildRunStatusText({ total: 5, active: 1, done: 3, failed: 1 }),
-      'Chal raha hai — 1 ban rahe hain · 3 poore · kul 5 prompts · 1 fail'
+      'Running — 1 generating · 3 complete · total 5 prompts · 1 fail'
     );
     assert.ok(!WorkerPool.buildRunStatusText({ total: 9, active: 9, done: 0, failed: 0 }).includes('/'), 'status me koi fraction nahi bacha');
     const wp = fs.readFileSync(path.join(ROOT, 'engine', 'workerPool.js'), 'utf8');
@@ -2403,8 +2403,8 @@ console.log('\n[4] FFmpeg getVideoDimensions fix');
     assert.ok(!side.includes('rotation-box'), 'v2.11 final: Account rotation section GAYA');
     assert.ok(side.includes('id="btn-add-account"') && side.includes('id="btn-import-cookie"'), 'dono add buttons box ke andar (ids barkarar)');
     assert.ok(side.includes('id="btn-sync-all"'), 'Verify All grid me maujood (id barkarar)');
-    assert.ok(!side.includes('id="side-stats-line"'), 'v2.13.0: purani stats line GAYA (totals sirf strip me)');
-    assert.ok(!side.includes('id="accounts-list"'), 'v2.13.0: purana cards list GAYA — ek hi unified lines box');
+    assert.ok(!side.includes('id="side-stats-line"'), 'v2.14.0: purani stats line GAYA (totals sirf strip me)');
+    assert.ok(!side.includes('id="accounts-list"'), 'v2.14.0: purana cards list GAYA — ek hi unified lines box');
     // Tartib: head → add-bar → status buttons → lines → action grid.
     const order = ['side-tabs', 'side-box-head', 'accounts-add-bar', 'cookie-filter-seg', 'cookie-lines', 'accounts-action-grid'];
     for (let i = 1; i < order.length; i++) {
@@ -2420,9 +2420,9 @@ console.log('\n[4] FFmpeg getVideoDimensions fix');
     assert.ok(!appSrc.includes('dash-total'), 'purani dash cards ki references gayi');
     const mainSrc = fs.readFileSync(path.join(ROOT, 'main.js'), 'utf8');
     assert.ok(mainSrc.includes("const views = ['generate', 'history', 'activity', 'import', 'settings']"), 'fit hook ke views me accounts nahi');
-    assert.ok(html.includes('id="strip-version">v2.13.0</span>'), 'strip badge v2.13.0');
+    assert.ok(html.includes('id="strip-version">v2.14.0</span>'), 'strip badge v2.14.0');
     const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-    assert.strictEqual(pkg.version, '2.13.0');
+    assert.strictEqual(pkg.version, '2.14.0');
   });
 
   console.log('\n[22] v2.7.0: download kai-ranneeti, download-fail = resubmit NAHI, log saafai, accounts ginati');
@@ -2446,7 +2446,7 @@ console.log('\n[4] FFmpeg getVideoDimensions fix');
     const wp = fs.readFileSync(path.join(ROOT, 'engine', 'workerPool.js'), 'utf8');
     assert.ok(wp.includes('deferredDownloadRetries'), 'pool me download-retry ki deferred list hai');
     assert.ok(wp.includes("opts.stage === 'download'"), 'pool failure ka stage padhta hai');
-    assert.ok(wp.includes('Seema (Settings se):'), 'pool run-start par saaf ginati bolta hai');
+    assert.ok(wp.includes('Limit (from Settings):'), 'pool run-start par saaf ginati bolta hai');
     assert.ok(wp.includes('liveAccounts: pool.length'), 'progress payload me live ginati jati hai');
     const html = fs.readFileSync(path.join(ROOT, 'renderer', 'index.html'), 'utf8');
     assert.ok(html.includes('gen-settings-grid'), 'Generate me compact settings grid hai');
@@ -2458,7 +2458,7 @@ console.log('\n[4] FFmpeg getVideoDimensions fix');
     const fit = fs.readFileSync(path.join(ROOT, 'tests', 'fitcheck.js'), 'utf8');
     assert.ok(fit.includes('1000x650'), 'fit test ab teen sizes par hai (1000x650 samet)');
     const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-    assert.strictEqual(pkg.version, '2.13.0');
+    assert.strictEqual(pkg.version, '2.14.0');
   });
 
   test('failover stage: download fail ki pehchan (kind download) barkarar', () => {
@@ -2542,7 +2542,7 @@ console.log('\n[4] FFmpeg getVideoDimensions fix');
         dbService.persistNow();
         console.log(JSON.stringify({
           submits, retryCalls, rows, logs,
-          startLine2: logs.some(l => l.includes('Seema (Settings se): 2') && l.includes('Live uplabdh: 2')),
+          startLine2: logs.some(l => l.includes('Limit (from Settings): 2') && l.includes('Live available: 2')),
           progress2: progress.some(p => p.seema === 2 && p.liveAccounts === 2 && p.workersActive === 2),
           dlStageEntries: activity.filter(a => a.stage === 'download').length,
           dlFailEntry: activity.some(a => a.stage === 'download' && /^Download fail:/.test(a.message || '')),
@@ -2570,7 +2570,7 @@ console.log('\n[4] FFmpeg getVideoDimensions fix');
       assert.deepStrictEqual(out.submits[p3], ['acc_dl1'], 'download baaki wale par bhi submit count 1');
       assert.strictEqual(out.rows[p3].status, 'pending', 'tile maujood + download fail → task fail NAHI, pending rehta hai');
       assert.strictEqual(out.rows[p3].needs_check, 1, 'task needs_check (download-retry) me hai');
-      assert.ok(out.logs.some(l => l.includes('download abhi baaki hai')), 'run ke aakhir me sach wali note line aayi');
+      assert.ok(out.logs.some(l => l.includes('download is still remaining')), 'run ke aakhir me sach wali note line aayi');
       // Scenario 4: 2 accounts + seema 2 → 2 workers asal me chale.
       const w1 = out.submits['worker check pehla prompt'] || [];
       const w2 = out.submits['worker check dusra prompt'] || [];
@@ -2676,7 +2676,7 @@ console.log('\n[4] FFmpeg getVideoDimensions fix');
     const wp = fs.readFileSync(path.join(ROOT, 'engine', 'workerPool.js'), 'utf8');
     assert.ok(wp.includes('onBackendMedia'), 'pool backend bandhan ko Activity me badalta hai');
     const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-    assert.strictEqual(pkg.version, '2.13.0');
+    assert.strictEqual(pkg.version, '2.14.0');
   });
 
   await testAsync('engine v2.8.0: backend bandhan se seedha download + fetch-fail par grid ki taraf (submit engine se bahar hi nahi)', async () => {
@@ -2796,7 +2796,7 @@ console.log('\n[4] FFmpeg getVideoDimensions fix');
     assert.ok(!fa.includes(": 'Google Safety / Policy Filter'"), 'blanket "Google Safety / Policy Filter" wajah GAYA');
     assert.ok(fa.includes("failureKind === 'safety'"), 'tile fail ki wajah failureKind se banti hai');
     const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-    assert.strictEqual(pkg.version, '2.13.0');
+    assert.strictEqual(pkg.version, '2.14.0');
   });
 
   test('v2.9.0 hifazat: apusht wajah = bounded retry mumkin, sabit jumla = prompt-level pakka', () => {
@@ -2857,17 +2857,17 @@ console.log('\n[4] FFmpeg getVideoDimensions fix');
     assert.ok(fa.includes('page.cookies(scope)'), 'Node fetch ke cookies ab media host ke scope se bhi aate hain');
     assert.ok(fa.includes('HTTP ${resp.status}'), 'Node fetch ka HTTP status log hota hai (khamoshi khatam)');
     assert.ok(fa.includes("credentials: 'include'"), 'in-page fetch browser ke apne jar se chalta hai');
-    assert.ok(fa.includes('Browser ke andar wale fetch'), 'in-page fetch ki saaf log line hai');
+    assert.ok(fa.includes('in-browser fetch'), 'in-page fetch ki saaf log line hai');
     assert.ok(fa.includes("hasWord(full, 'download')"), 'menu matcher saaf karke shabd pehchanta hai (icon ligature se nahi tootta)');
     assert.ok(!fa.includes("aria === 'download' || t === 'download'"), 'purana exact-only menu match gaya');
     assert.ok(fa.includes('_inEditorView'), 'editor ki jaanch ab URL se hoti hai');
     assert.ok(fa.includes("u.includes('/edit/')"), 'editor = /edit/ wala URL');
     assert.ok(fa.includes("location.pathname.includes('/edit/')"), 'grid ki jaanch editor ki strip se dhokha nahi khati');
-    assert.ok(fa.includes('Network jaanch'), 'backend khabar ke saath capture diagnostics bhi log hote hain');
+    assert.ok(fa.includes('Network check'), 'backend khabar ke saath capture diagnostics bhi log hote hain');
     const appSrc = fs.readFileSync(path.join(ROOT, 'renderer', 'app.js'), 'utf8');
     assert.ok(appSrc.includes('suffixNote'), 'renderer suffix wali poori files ki line dikhata hai');
     const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-    assert.strictEqual(pkg.version, '2.13.0');
+    assert.strictEqual(pkg.version, '2.14.0');
   });
 
   console.log(`\n${passed} passed, ${failed} failed`);
