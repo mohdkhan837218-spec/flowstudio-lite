@@ -1431,3 +1431,20 @@ input[type="checkbox"] { width: 11px !important; height: 11px !important; }
 #btn-add-tag { height: 22px !important; font-size: 11px !important; padding: 0 8px !important; white-space: nowrap !important; }
 #btn-import-prompts-file { height: 20px !important; font-size: 10.5px !important; padding: 2px 8px !important; }
 .zd-stream { min-height: 68px !important; max-height: 120px !important; }
+
+/* ================================================================
+   v2.21.0 — Activity right-side controls in PILL BOXES (owner ne
+   5 samples me se Sample 5 "Gol Pill" chuna, 2026-10-17):
+   Simple|Details apne gol pill box me, Copy log|Clear log apne gol
+   pill box me; dono boxes ek hi height aur shakal ke.
+   ================================================================ */
+#activity-panel-mode.seg.seg-mini, .zd-logbox {
+  border: 1px solid var(--border-soft) !important; border-radius: 999px !important;
+  background: rgba(255,255,255,.03) !important; padding: 3px 5px !important;
+  height: 28px !important; box-sizing: border-box !important;
+  display: inline-flex !important; align-items: center !important; gap: 2px !important;
+}
+#activity-panel-mode .seg-btn { border: none !important; border-radius: 999px !important; height: 20px !important; }
+.zd-logbox .mini-btn { border: none !important; background: transparent !important; box-shadow: none !important;
+  height: 20px !important; min-height: 20px !important; padding: 0 10px !important; border-radius: 999px !important; }
+.zd-logbox .mini-btn:hover { background: rgba(255,255,255,.07) !important; }

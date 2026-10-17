@@ -6,6 +6,10 @@ Built as a clean rewrite of FlowStudio V2, keeping its proven Google Flow page a
 
 ---
 
+## What's new in v2.21.0
+
+- **Activity controls in pill boxes** (owner picked sample 5 of 5, "Gol Pill"): the **Simple | Details** switch and the **Copy log | Clear log** actions now each sit inside their own rounded pill-shaped box section in the Activity header row — same height, same shape. No other changes; everything from v2.20.0 carries over.
+
 ## What's new in v2.20.0
 
 - **The whole interface is one strong step smaller** — text, buttons, fields and chips all scaled down together (the owner's approved size), so every section has open space around it and the app sits roomy and fully fitted on a 1024x768 screen.

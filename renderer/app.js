@@ -1011,7 +1011,7 @@ document.querySelectorAll('#prompt-mode-seg .seg-btn').forEach(btn => {
 });
 document.getElementById('prompts-input').addEventListener('input', updatePromptCount);
 
-// v2.20.0: convert SRT subtitle text into prompt text — one block per
+// v2.21.0: convert SRT subtitle text into prompt text — one block per
 // prompt, block lines joined with a space, blocks split by a blank line.
 function srtToPrompts(srt) {
   const blocks = String(srt).replace(/\r\n/g, '\n').split(/\n\s*\n/);
@@ -1031,7 +1031,7 @@ document.getElementById('btn-import-prompts-file').addEventListener('click', asy
   try {
     const res = await window.api.importPromptsFile();
     if (res && res.success && typeof res.text === 'string') {
-      // v2.20.0: .srt files — subtitle blocks become prompts (the text
+      // v2.21.0: .srt files — subtitle blocks become prompts (the text
       // of each block, blank-line separated like normal prompts).
       if (res.fileName && /\.srt$/i.test(res.fileName)) res.text = srtToPrompts(res.text);
       const area = document.getElementById('prompts-input');
@@ -2105,7 +2105,7 @@ async function renderAbout() {
     const box = document.getElementById('about-box');
     box.innerHTML = '';
     const lines = [
-      ['Version', 'FlowStudio Lite v2.20.0'],
+      ['Version', 'FlowStudio Lite v2.21.0'],
       ['Accounts', String(currentAccounts.length)],
       ['Total videos saved', stats ? String(stats.total) : '—'],
       ['Design', 'Warm Premium (Dark) + White appearance — change it above']
@@ -2481,7 +2481,7 @@ function renderAccountLines() {
     });
     line.appendChild(open);
     box.appendChild(line);
-    // v2.20.0 (owner): NO text under the cookie lines — status shows
+    // v2.21.0 (owner): NO text under the cookie lines — status shows
     // only through the line's own chip. Notes are not rendered at all.
   });
 }
@@ -2572,7 +2572,7 @@ if (btnCustomTagAdd) btnCustomTagAdd.addEventListener('click', async () => {
 });
 
 // ---------- Updates box ----------
-const APP_VERSION = '2.20.0';
+const APP_VERSION = '2.21.0';
 function versionNewer(a, b) {
   const pa = String(a || '').replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0);
   const pb = String(b || '').replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0);
