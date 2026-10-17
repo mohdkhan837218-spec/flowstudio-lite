@@ -6,6 +6,25 @@ Built as a clean rewrite of FlowStudio V2, keeping its proven Google Flow page a
 
 ---
 
+## What's new in v2.20.0
+
+- **The whole interface is one strong step smaller** — text, buttons, fields and chips all scaled down together (the owner's approved size), so every section has open space around it and the app sits roomy and fully fitted on a 1024x768 screen.
+- **Generate page is cleaner:** the OUTPUT box has moved into Settings (the output folder is chosen there now), the "Parallel browsers" note line under the boxes is gone, and the line under the prompts box is gone. The prompts box itself is wider.
+- **Import button is now "TXT/SRT"** on the right side — and it really does open .srt files too: each subtitle block becomes a prompt.
+- **"Parallel Browsers" is just "Browsers"** now, and its number always shows.
+- **No text under the cookie lines** — a line is just the tick, name, credits/reason, its status chip and the Chrome button.
+- **Activity buttons form one even block:** Ready + Previous videos on the first line, Simple/Details + Copy log + Clear log on the second — both lines the same width, every button the same height, text centred.
+- This release also carries the v2.18.0 and v2.19.0 improvements (cookies box filling the sidebar, equal-height account lines, the Activity stream always visible).
+
+## What's new in v2.19.0
+
+- **Activity section is always visible now:** on short windows the Activity stream used to shrink to a 30px sliver — the panel was there but its lines could not be seen, which read as the section being hidden. The stream now keeps a proper fixed height (about 4 lines) at every window height and the panel no longer shrinks; the space comes out of the flexible part of the Generate form.
+
+## What's new in v2.18.0
+
+- **Cookies box fills the sidebar to the bottom:** the account lines box in the sidebar now stretches down and takes all the height left in the sidebar — no more empty gap under it. A fixed height saved by the old corner-drag no longer holds it back, and the lines box is no longer corner-resizable.
+- **Every account line is the same height:** each line is now one fixed-height row (name + reason/credits · status chip · Chrome button, all on one line) — a line no longer wraps into two rows on the owner's 1024-wide screen, so all lines line up equal.
+
 ## What's new in v2.17.0
 
 - **New app icon:** the owner picked design #39 "Comet Star" from a 100-logo sheet — a gold four-point star with a dotted comet trail and a play mark, on the app's warm dark tile. It is now the Windows app icon (desktop shortcut, taskbar, installer) and the logo inside the app's top strip.

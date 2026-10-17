@@ -1264,10 +1264,10 @@ ipcMain.handle('preview-video', async (event, taskId) => {
 ipcMain.handle('import-prompts-file', async (event) => {
   assertTrustedRenderer(event);
   const result = await dialog.showOpenDialog(mainWindow, {
-    title: 'Select a prompts .txt file (one prompt per line)',
+    title: 'Select a prompts file (.txt or .srt)',
     properties: ['openFile'],
     filters: [
-      { name: 'Text files', extensions: ['txt'] },
+      { name: 'Text files', extensions: ['txt', 'srt'] },
       { name: 'All files', extensions: ['*'] }
     ]
   });

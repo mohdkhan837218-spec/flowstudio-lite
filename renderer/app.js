@@ -1011,12 +1011,29 @@ document.querySelectorAll('#prompt-mode-seg .seg-btn').forEach(btn => {
 });
 document.getElementById('prompts-input').addEventListener('input', updatePromptCount);
 
+// v2.20.0: convert SRT subtitle text into prompt text — one block per
+// prompt, block lines joined with a space, blocks split by a blank line.
+function srtToPrompts(srt) {
+  const blocks = String(srt).replace(/\r\n/g, '\n').split(/\n\s*\n/);
+  const out = [];
+  for (const block of blocks) {
+    const lines = block.split('\n')
+      .map(s => s.trim())
+      .filter(s => s && !/^\d+$/.test(s) && !s.includes('-->'));
+    if (lines.length) out.push(lines.join(' '));
+  }
+  return out.join('\n\n');
+}
+
 document.getElementById('btn-import-prompts-file').addEventListener('click', async (e) => {
   const btn = e.currentTarget;
   btn.disabled = true;
   try {
     const res = await window.api.importPromptsFile();
     if (res && res.success && typeof res.text === 'string') {
+      // v2.20.0: .srt files — subtitle blocks become prompts (the text
+      // of each block, blank-line separated like normal prompts).
+      if (res.fileName && /\.srt$/i.test(res.fileName)) res.text = srtToPrompts(res.text);
       const area = document.getElementById('prompts-input');
       area.value = area.value.trim() ? `${area.value.replace(/\s+$/, '')}\n${res.text}` : res.text;
       area.dispatchEvent(new Event('input', { bubbles: true }));
@@ -1194,29 +1211,6 @@ function addLog(data) {
   logBox.scrollTop = logBox.scrollHeight;
 }
 
-document.getElementById('btn-pick-folder').addEventListener('click', async () => {
-  // v2.1.0 guard: an IPC failure must show, never die silently.
-  try {
-    const res = await window.api.selectFolder();
-    if (res && res.success) {
-      document.getElementById('setting-folder').value = res.folder;
-      document.getElementById('pref-folder').value = res.folder;
-      await window.api.setSetting('download_folder', res.folder);
-    }
-  } catch (err) {
-    showToast(`Folder chunne me dikkat: ${err.message}`, 'error');
-  }
-});
-
-document.getElementById('btn-open-folder').addEventListener('click', async () => {
-  try {
-    const folder = document.getElementById('setting-folder').value;
-    if (folder) await window.api.openFolder(folder);
-  } catch (err) {
-    showToast(`Could not open the folder: ${err.message}`, 'error');
-  }
-});
-
 // v2.1.0: the whole visible log, for the 📋 Copy Log button.
 // v2.2.0: copies the stored entries in the shared Simple format, and
 // a 🧹 Clear Log button sits beside it (image-4 style controls).
@@ -1281,7 +1275,7 @@ async function startNewRun(prompts) {
     // v2.4.0: Outputs is locked to x1 — the select no longer exists.
     outputsCount: 1,
     concurrency: await readSavedConcurrency(),
-    downloadFolder: document.getElementById('setting-folder').value
+    downloadFolder: document.getElementById('pref-folder').value
   };
   taskRows.clear();
   taskList.innerHTML = '';
@@ -1818,7 +1812,7 @@ document.getElementById('history-check-all').addEventListener('change', (e) => {
 });
 document.getElementById('btn-history-open-folder').addEventListener('click', async () => {
   try {
-    const folder = document.getElementById('setting-folder').value || await window.api.getDefaultDownloadFolder();
+    const folder = document.getElementById('pref-folder').value || await window.api.getDefaultDownloadFolder();
     if (folder) await window.api.openFolder(folder);
   } catch (err) {
     showToast(`Could not open the folder: ${err.message}`, 'error');
@@ -2092,7 +2086,6 @@ async function loadSettings() {
     renderGenAccountsLine();
     if (folder) {
       document.getElementById('pref-folder').value = folder;
-      document.getElementById('setting-folder').value = folder;
     }
     // v2.3.0: file naming mode (tag default / scene purana tareeka).
     const namingValue = String(namingMode) === 'scene' ? 'scene' : 'tag';
@@ -2112,7 +2105,7 @@ async function renderAbout() {
     const box = document.getElementById('about-box');
     box.innerHTML = '';
     const lines = [
-      ['Version', 'FlowStudio Lite v2.17.0'],
+      ['Version', 'FlowStudio Lite v2.20.0'],
       ['Accounts', String(currentAccounts.length)],
       ['Total videos saved', stats ? String(stats.total) : '—'],
       ['Design', 'Warm Premium (Dark) + White appearance — change it above']
@@ -2168,7 +2161,6 @@ document.getElementById('btn-pref-pick-folder').addEventListener('click', async 
     const res = await window.api.selectFolder();
     if (res && res.success) {
       document.getElementById('pref-folder').value = res.folder;
-      document.getElementById('setting-folder').value = res.folder;
       await window.api.setSetting('download_folder', res.folder);
     }
   } catch (err) {
@@ -2350,7 +2342,7 @@ window.api.onCookieCheckUpdate((data) => {
     updatePromptCount();
 
     const folder = await window.api.getDefaultDownloadFolder();
-    if (folder) document.getElementById('setting-folder').value = folder;
+    if (folder) document.getElementById('pref-folder').value = folder;
     // v2.5.0: concurrency lives only in Settings — just remember it
     // for the Generate status line; every run re-reads it fresh.
     await readSavedConcurrency();
@@ -2489,16 +2481,8 @@ function renderAccountLines() {
     });
     line.appendChild(open);
     box.appendChild(line);
-    // Notes live UNDER the line, only when there is something to say.
-    if (acc.status === 'Cooldown' && acc.restUntil) {
-      const till = new Date(acc.restUntil);
-      if (!isNaN(till)) box.appendChild(el('div', 'ck-note', `Resting till ${till.toLocaleString()} — rotation skips this account until then.`));
-    }
-    if (acc.status === 'Unconfirmed') {
-      box.appendChild(el('div', 'ck-note', 'Login unconfirmed — Sync once more to confirm (two-strike rule), or Sign In if this account really is logged out.'));
-    }
-    const msg = accountMessages.get(acc.id);
-    if (msg) box.appendChild(el('div', msg.isError ? 'ck-note error' : 'ck-note', msg.text));
+    // v2.20.0 (owner): NO text under the cookie lines — status shows
+    // only through the line's own chip. Notes are not rendered at all.
   });
 }
 // Kept as an alias: cookie-check events still call the old name.
@@ -2588,7 +2572,7 @@ if (btnCustomTagAdd) btnCustomTagAdd.addEventListener('click', async () => {
 });
 
 // ---------- Updates box ----------
-const APP_VERSION = '2.17.0';
+const APP_VERSION = '2.20.0';
 function versionNewer(a, b) {
   const pa = String(a || '').replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0);
   const pb = String(b || '').replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0);
@@ -2734,7 +2718,8 @@ function makeCornerResizable(elm, settingKey, minH, maxH) {
     try { await window.api.setSetting(settingKey, String(Math.round(elm.getBoundingClientRect().height))); } catch (e) {}
   });
 }
-makeCornerResizable(document.getElementById('cookie-lines'), 'cookie_box_h', 84, 460);
+// v2.19.0: cookie-lines is no longer corner-resizable — it flexes to
+// fill the sidebar down to the bottom (owner's bottom-fill rule).
 makeCornerResizable(document.querySelector('.gen-form'), 'prompts_box_h', 240, 1000);
 
 // ---------- v2.11 init extras ----------
@@ -2758,9 +2743,8 @@ makeCornerResizable(document.querySelector('.gen-form'), 'prompts_box_h', 240, 1
     const stripVer = document.getElementById('strip-version');
     if (stripVer) stripVer.textContent = `v${APP_VERSION}`;
     if (typeof updatePromptCount === 'function') { try { updatePromptCount(); } catch (e) {} }
-    const ckH = parseInt(await window.api.getSetting('cookie_box_h', ''), 10);
-    const ckBox = document.getElementById('cookie-lines');
-    if (ckBox && ckH >= 84 && ckH <= 460) { ckBox.style.height = `${ckH}px`; ckBox.style.flex = 'none'; }
+    // v2.19.0: the cookie lines box now flexes to the bottom of the
+    // sidebar — a saved fixed height is no longer applied to it.
     if (String(autoUpd) !== '0') checkUpdates(false);
   } catch (e) { /* v2.11 extras are best-effort */ }
 })();
